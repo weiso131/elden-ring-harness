@@ -34,7 +34,7 @@ Install [me3](https://github.com/garyttierney/me3), back up your save, then:
 ```sh
 ./launch.sh                                  # writes to out/<date-time>/
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # task groups to mark, or `all`
-./launch.sh --run scripts/radahn-p2.sh       # run a script once the mod answers
+./launch.sh --run "scripts/boss.sh radahn-dlc" # run a command once the mod answers
 ```
 
 `launch.sh` turns on MangoHud unless `MANGOHUD=0` is given, sets `ERH_OUT`, and starts me3 from outside this directory: me3 picks its
@@ -111,12 +111,16 @@ set while the player is locked on to him, with no hit needed; without the lock-o
 he does not. His grab kills on the second hit whatever `nodead` says,
 which `nohit` is for.
 
-`scripts/boss.sh` chains these to bring a defeated boss back in a phase, e.g. DLC
-Radahn in his second phase:
+`scripts/boss.sh` chains these to bring a defeated boss from `bosses.tsv` back,
+optionally in a later phase. Run without arguments it asks what to do; with them
+it runs straight through (`--help` lists the options, `--list` the bosses):
 
 ```sh
-scripts/boss.sh m20_01_00_00 200100 50 20010800 20010801
+scripts/boss.sh                        # asks
+scripts/boss.sh radahn-dlc --nohit     # DLC Radahn in his second phase
+scripts/boss.sh radahn-dlc --no-hp     # phase one
 ```
 
 It clears the boss's flags, warps to Roundtable Hold and back so the boss's map is
-reloaded, waits for the map, and sets the boss's HP.
+reloaded, waits for the boss to be loaded, and sets its HP, locking on first for
+bosses that change phase only while locked on.

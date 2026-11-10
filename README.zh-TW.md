@@ -28,7 +28,7 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 ```sh
 ./launch.sh                                  # 寫到 out/<日期-時間>/
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # 要放標記的 task group，或 `all`
-./launch.sh --run scripts/radahn-p2.sh       # 模組可以回應後，自動執行一個腳本
+./launch.sh --run "scripts/boss.sh radahn-dlc" # 模組可以回應後，自動執行一個指令
 ```
 
 `launch.sh` 會開 MangoHud（給 `MANGOHUD=0` 就不開）、設好 `ERH_OUT`，並且在這個目錄以外啟動 me3：me3 會優先從
@@ -97,11 +97,14 @@ cli/target/release/erh rawpress 252 3 # 按住某個原始輸入編號，例如�
 實測：玩家鎖定 DLC 拉塔恩時，`targethp 50` 之後他就直接進二階段，不用再打；沒有鎖定就不會。他的抱摔技中兩次就會死，`nodead`
 擋不住，這時要用 `nohit`。
 
-`scripts/boss.sh` 把上面這些串起來，讓打過的 boss 以指定的階段重新出現，例如二階段的 DLC 拉塔恩：
+`scripts/boss.sh` 把上面這些串起來，讓 `bosses.tsv` 裡打過的 boss 重新出現，也可以直接進後面的階段。
+不帶參數會一步步問你；帶參數就直接執行（`--help` 列出選項，`--list` 列出 boss）：
 
 ```sh
-scripts/boss.sh m20_01_00_00 200100 50 20010800 20010801
+scripts/boss.sh                        # 互動式
+scripts/boss.sh radahn-dlc --nohit     # 二階段的 DLC 拉塔恩
+scripts/boss.sh radahn-dlc --no-hp     # 一階段
 ```
 
-它會關掉 boss 的旗標、傳送到圓桌廳堂再傳送回來（讓 boss 所在的地圖重新載入）、等地圖載入完，
-再設定 boss 的 HP。
+它會關掉 boss 的旗標、傳送到圓桌廳堂再傳送回來（讓 boss 所在的地圖重新載入）、等 boss 載入，
+再設定它的 HP；只在鎖定時才會換階段的 boss，會先鎖定。
