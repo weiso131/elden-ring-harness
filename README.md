@@ -84,6 +84,8 @@ cli/target/release/erh press skill 3 # hold a key for 3 frames (default 1)
 cli/target/release/erh probe attack  # for 120 frames, count when the mod sees attack held; see status
 cli/target/release/erh scan          # for 120 frames, list raw input indices seen down; see status
 cli/target/release/erh rawpress 252 3 # hold a raw input index, e.g. a menu key found by scan
+cli/target/release/erh keypress 0x12 3 # hold a key by DirectInput code (0x12 is E) in the keyboard device
+cli/target/release/erh mousepress 0 3 # hold a mouse button (0 is left) in the mouse device
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command

@@ -1,5 +1,5 @@
 use eldenring::cs::{CSTaskGroupIndex, CSTaskImp, UserInputKey};
-use eldenring::dluid::DLUserInputDeviceImpl;
+use eldenring::dluid::{DLUserInputDeviceImpl, DLUserInputManagerImpl};
 use eldenring::fd4::{FD4PadManager, FD4TaskData, InputType};
 use fromsoftware_shared::{FromStatic, RecurringTaskHandle, SharedTaskImpExt, Subclass};
 use std::sync::Mutex;
@@ -10,6 +10,11 @@ use std::sync::Mutex;
 pub enum Target {
     Key(UserInputKey),
     Raw(usize),
+    /// A DirectInput key code in the keyboard device's own state, for screens
+    /// that read the keyboard rather than the virtual input.
+    Dik(u8),
+    /// A mouse button in the mouse device's own state.
+    Mouse(u8),
 }
 
 /// Targets being held and for how many more frames.
@@ -172,6 +177,24 @@ fn press(target: Target) -> Result<(), &'static str> {
     let idx = match target {
         Target::Key(key) => indices(key)?,
         Target::Raw(i) => vec![i],
+        Target::Dik(k) => {
+            let man = unsafe { DLUserInputManagerImpl::instance_mut() }
+                .map_err(|_| "no input manager")?;
+            let kb = man.get_keyboard_device_mut().ok_or("no keyboard device")?;
+            kb.di_keyboard_state[k as usize] = 0x80;
+            return Ok(());
+        }
+        Target::Mouse(b) => {
+            let man = unsafe { DLUserInputManagerImpl::instance_mut() }
+                .map_err(|_| "no input manager")?;
+            let mouse = man.get_mouse_device_mut().ok_or("no mouse device")?;
+            *mouse
+                .di_mouse_state
+                .buttons
+                .get_mut(b as usize)
+                .ok_or("no such button")? = 0x80;
+            return Ok(());
+        }
     };
     let d = device()?;
     for i in idx {

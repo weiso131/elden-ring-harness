@@ -171,6 +171,28 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             crate::input::scan(120);
             "ok scanning raw input for 120 frames; see scan in status\n".into()
         }
+        [kind @ ("keypress" | "mousepress"), code, rest @ ..] => {
+            let code = code
+                .strip_prefix("0x")
+                .map_or_else(|| code.parse(), |h| u8::from_str_radix(h, 16));
+            let Ok(code) = code else {
+                return "error not a key code (decimal or 0x..)\n".into();
+            };
+            let frames = match rest {
+                [] => 1,
+                [n] => match n.parse() {
+                    Ok(n) if n > 0 => n,
+                    _ => return format!("error not a frame count: {n}\n"),
+                },
+                _ => return format!("error usage: {kind} CODE [FRAMES]\n"),
+            };
+            let target = match *kind {
+                "keypress" => crate::input::Target::Dik(code),
+                _ => crate::input::Target::Mouse(code),
+            };
+            crate::input::hold(target, frames);
+            format!("ok {kind} {code} frames={frames}\n")
+        }
         ["rawpress", idx, rest @ ..] => {
             let Ok(idx) = idx.parse() else {
                 return format!("error not an index: {idx}\n");

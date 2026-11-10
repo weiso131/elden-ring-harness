@@ -76,6 +76,8 @@ cli/target/release/erh press skill 3 # 按住某個鍵 3 幀（預設 1 幀）
 cli/target/release/erh probe attack  # 120 幀內，計算模組看到 attack 被按住幾幀；結果在 status
 cli/target/release/erh scan          # 120 幀內，列出被按下的原始輸入編號；結果在 status
 cli/target/release/erh rawpress 252 3 # 按住某個原始輸入編號，例如用 scan 找到的選單按鍵
+cli/target/release/erh keypress 0x12 3 # 在鍵盤裝置裡按住某個 DirectInput 鍵碼（0x12 是 E）
+cli/target/release/erh mousepress 0 3 # 在滑鼠裝置裡按住某個按鈕（0 是左鍵）
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案
