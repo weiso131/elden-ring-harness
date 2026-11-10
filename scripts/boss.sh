@@ -28,7 +28,7 @@ erh=$here/../cli/target/release/erh
 table=$here/../bosses.tsv
 
 rows() { grep -v '^#' "$table" | grep -v '^$'; }
-list() { rows | awk -F'\t' '{ printf "%-12s %s%s\n", $1, $8, ($7 == "yes" ? "" : "  (not checked in game)") }'; }
+list() { rows | awk -F'\t' '{ printf "%-12s %s%s\n", $1, $9, ($8 == "yes" ? "" : "  (not checked in game)") }'; }
 
 boss= nodead=on nohit=off hp=table
 while [ $# -gt 0 ]; do
@@ -73,7 +73,7 @@ fi
 row=$(rows | awk -F'\t' -v b="$boss" '$1 == b')
 [ -n "$row" ] || { echo "no boss '$boss' in bosses.tsv; --list shows them" >&2; exit 2; }
 col() { echo "$row" | cut -f"$1"; }
-block=$(col 2) grace=$(col 3) flags=$(col 4) lock=$(col 6)
+block=$(col 2) grace=$(col 3) flags=$(col 4) lock=$(col 6) esc=$(col 7)
 [ "$hp" = table ] && hp=$(col 5)
 [ "$hp" = - ] && hp=none
 
@@ -119,6 +119,12 @@ if [ "$hp" != none ]; then
 		done
 	else
 		"$erh" targethp "$hp"
+	fi
+	if [ "$esc" = yes ]; then
+		# The phase change cutscene starts a moment after the HP drops. Esc
+		# goes to the keyboard device, which screens like this one read.
+		sleep 2
+		"$erh" keypress 0x01 3
 	fi
 fi
 "$erh" status

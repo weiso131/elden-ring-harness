@@ -1,4 +1,4 @@
 # One boss per row, for scripts/boss.sh. Tab-separated; lines starting with # are skipped.
-# id	block as `erh status` shows it	grace to warp to (BonfireWarpParam row)	flags to clear	HP % that starts the next phase (- for none)	lock on before setting HP	checked in game	name
-radahn-dlc	m20_01_00_00	200100	20010800,20010801	50	yes	yes	Promised Consort Radahn (DLC)
-malenia	m15_00_00_00	150004	15000800,15000801	-	no	no	Malenia, Blade of Miquella
+# id	block as `erh status` shows it	grace to warp to (BonfireWarpParam row)	flags to clear	HP % that starts the next phase (- for none)	lock on before setting HP	press Esc to skip the phase change cutscene	checked in game	name
+radahn-dlc	m20_01_00_00	200100	20010800,20010801	50	yes	yes	yes	Promised Consort Radahn (DLC)
+malenia	m15_00_00_00	150004	15000800,15000801	-	no	no	no	Malenia, Blade of Miquella
