@@ -155,6 +155,26 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 Err(e) => format!("error no GameMan: {e:?}\n"),
             }
         }
+        ["tp", x, y, z] => {
+            let (Ok(x), Ok(y), Ok(z)) = (x.parse::<f32>(), y.parse::<f32>(), z.parse::<f32>())
+            else {
+                return "error usage: tp X Y Z (world position, as status shows it)\n".into();
+            };
+            let Some(p) = (unsafe { WorldChrMan::instance_mut() })
+                .ok()
+                .and_then(|w| w.main_player.as_mut())
+            else {
+                return "error no player\n".into();
+            };
+            let physics = &mut p.chr_ins.modules.physics;
+            physics.position.0 = x;
+            physics.position.1 = y;
+            physics.position.2 = z;
+            // Asks the character controller to take the new position too, or
+            // it may keep its own and move the player back.
+            physics.chr_proxy_pos_update_requested = true;
+            format!("ok tp {x:.2} {y:.2} {z:.2}\n")
+        }
         ["lockhp", pct] => {
             let Ok(pct) = pct.parse::<u32>() else {
                 return format!("error not a percentage: {pct}\n");
@@ -395,10 +415,11 @@ fn status(frame: u64) -> String {
     };
     let data = &p.chr_ins.modules.data;
     let pos = &p.block_position;
+    let world = &p.chr_ins.modules.physics.position;
     let _ = write!(
         s,
-        "stage\tin_game\nhp\t{}\nmax_hp\t{}\nblock\t{}\npos\t{:.2} {:.2} {:.2}\n",
-        data.hp, data.max_hp, p.current_block_id, pos.x, pos.y, pos.z
+        "stage\tin_game\nhp\t{}\nmax_hp\t{}\nblock\t{}\npos\t{:.2} {:.2} {:.2}\nworld\t{:.2} {:.2} {:.2}\n",
+        data.hp, data.max_hp, p.current_block_id, pos.x, pos.y, pos.z, world.0, world.1, world.2
     );
     if let Ok(w) = unsafe { WorldChrMan::instance() } {
         // Characters the game has loaded around the player; a boss's arena
@@ -409,10 +430,15 @@ fn status(frame: u64) -> String {
         if let Some(t) = target(w) {
             let d = &unsafe { t.as_ref() }.modules.data;
             let _ = writeln!(s, "target_hp\t{}\ntarget_max_hp\t{}", d.hp, d.max_hp);
-            let dist = w.chr_inses_by_distance.iter().find(|e| e.chr_ins == t);
-            if let Some(e) = dist {
-                let _ = writeln!(s, "target_dist\t{:.1}", e.distance);
-            }
+            let tp = &unsafe { t.as_ref() }.modules.physics.position;
+            let me = &p.chr_ins.modules.physics.position;
+            let (dx, dy, dz) = (tp.0 - me.0, tp.1 - me.1, tp.2 - me.2);
+            let _ = writeln!(
+                s,
+                "target_dist\t{:.1}",
+                (dx * dx + dy * dy + dz * dz).sqrt()
+            );
+            let _ = writeln!(s, "target_world\t{:.2} {:.2} {:.2}", tp.0, tp.1, tp.2);
         }
     }
     s
