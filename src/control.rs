@@ -297,9 +297,13 @@ fn status(frame: u64) -> String {
         "stage\tin_game\nhp\t{}\nmax_hp\t{}\nblock\t{}\npos\t{:.2} {:.2} {:.2}\n",
         data.hp, data.max_hp, p.current_block_id, pos.x, pos.y, pos.z
     );
-    if let Some(t) = unsafe { WorldChrMan::instance() }.ok().and_then(target) {
-        let d = &unsafe { t.as_ref() }.modules.data;
-        let _ = writeln!(s, "target_hp\t{}\ntarget_max_hp\t{}", d.hp, d.max_hp);
+    if let Ok(w) = unsafe { WorldChrMan::instance() } {
+        let locked = w.chr_ins_by_handle(&p.locked_on_enemy).is_some();
+        let _ = writeln!(s, "locked\t{}", if locked { "on" } else { "off" });
+        if let Some(t) = target(w) {
+            let d = &unsafe { t.as_ref() }.modules.data;
+            let _ = writeln!(s, "target_hp\t{}\ntarget_max_hp\t{}", d.hp, d.max_hp);
+        }
     }
     s
 }

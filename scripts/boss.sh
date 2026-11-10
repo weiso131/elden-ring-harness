@@ -37,5 +37,13 @@ sleep 3
 wait_for block = "$block"
 # Characters load a moment after the map does.
 sleep 5
+# Radahn only changes phase while locked on to. Presses need the game window
+# focused, so keep the mouse over it.
+for _ in 1 2 3 4 5; do
+	[ "$(field locked)" = on ] && break
+	"$erh" press lockon 2
+	sleep 1
+done
+[ "$(field locked)" = on ] || echo "not locked on; is the game window focused?" >&2
 "$erh" targethp "$hp"
 "$erh" status

@@ -106,7 +106,8 @@ hangs off taking damage, which writing HP skips; `exterminate on` and one hit is
 meant to end a phase through the damage path instead, not tried yet.
 
 Seen in the game: DLC Radahn enters his second phase as soon as `targethp 50` is
-set, with no hit needed. His grab kills on the second hit whatever `nodead` says,
+set while the player is locked on to him, with no hit needed; without the lock-on
+he does not. His grab kills on the second hit whatever `nodead` says,
 which `nohit` is for.
 
 `scripts/boss.sh` chains these to bring a defeated boss back in a phase, e.g. DLC
