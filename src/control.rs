@@ -1,5 +1,5 @@
 use eldenring::cs::{
-    BonfireWarpParam, CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, SoloParamRepository,
+    BonfireWarpParam, CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, ChrIns, SoloParamRepository,
     WorldChrMan, WorldChrManDbgFlags,
 };
 use eldenring::fd4::FD4TaskData;
@@ -9,6 +9,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::io;
 use std::path::Path;
+use std::ptr::NonNull;
 use std::sync::Mutex;
 use std::time::Duration;
 
@@ -120,16 +121,10 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             let Ok(pct) = pct.parse::<u32>() else {
                 return format!("error not a percentage: {pct}\n");
             };
-            let Ok(w) = (unsafe { WorldChrMan::instance_mut() }) else {
-                return "error no WorldChrMan\n".into();
+            let Some(mut t) = unsafe { WorldChrMan::instance() }.ok().and_then(target) else {
+                return "error no target\n".into();
             };
-            let Some(handle) = w.main_player.as_ref().map(|p| p.locked_on_enemy) else {
-                return "error no player\n".into();
-            };
-            let Some(target) = w.chr_ins_by_handle_mut(&handle) else {
-                return "error nothing locked on\n".into();
-            };
-            let data = &mut target.modules.data;
+            let data = &mut unsafe { t.as_mut() }.modules.data;
             data.hp = (data.max_hp as i64 * pct.min(100) as i64 / 100) as i32;
             format!("ok target hp={}/{}\n", data.hp, data.max_hp)
         }
@@ -229,6 +224,21 @@ fn dump_flags(path: &Path) -> Result<usize, String> {
     Ok(n)
 }
 
+/// The enemy the player is locked on to, else the loaded character with the
+/// most max HP, which in a boss arena is normally the boss.
+fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
+    let p = w.main_player.as_ref()?;
+    if let Some(t) = w.chr_ins_by_handle(&p.locked_on_enemy) {
+        return Some(NonNull::from(t));
+    }
+    let me: *const ChrIns = &p.chr_ins;
+    w.chr_inses_by_distance
+        .iter()
+        .map(|e| e.chr_ins)
+        .filter(|c| !std::ptr::eq(c.as_ptr(), me))
+        .max_by_key(|c| unsafe { c.as_ref() }.modules.data.max_hp)
+}
+
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
     if let Ok(f) = unsafe { WorldChrManDbgFlags::instance() } {
@@ -250,11 +260,8 @@ fn status(frame: u64) -> String {
         "stage\tin_game\nhp\t{}\nmax_hp\t{}\nblock\t{}\npos\t{:.2} {:.2} {:.2}\n",
         data.hp, data.max_hp, p.current_block_id, pos.x, pos.y, pos.z
     );
-    let target = unsafe { WorldChrMan::instance() }
-        .ok()
-        .and_then(|w| w.chr_ins_by_handle(&p.locked_on_enemy));
-    if let Some(t) = target {
-        let d = &t.modules.data;
+    if let Some(t) = unsafe { WorldChrMan::instance() }.ok().and_then(target) {
+        let d = &unsafe { t.as_ref() }.modules.data;
         let _ = writeln!(s, "target_hp\t{}\ntarget_max_hp\t{}", d.hp, d.max_hp);
     }
     s
