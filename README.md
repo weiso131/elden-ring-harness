@@ -35,6 +35,7 @@ Install [me3](https://github.com/garyttierney/me3), back up your save, then:
 ./launch.sh                                  # writes to out/<date-time>/
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # task groups to mark, or `all`
 ./launch.sh --run "scripts/boss.sh radahn-dlc" # run a command once the mod answers
+./launch.sh --title                          # press through the title screen into the last save
 ```
 
 `launch.sh` turns on MangoHud unless `MANGOHUD=0` is given, sets `ERH_OUT`, and starts me3 from outside this directory: me3 picks its
@@ -126,3 +127,9 @@ scripts/boss.sh radahn-dlc --no-hp     # phase one
 It clears the boss's flags, warps to Roundtable Hold and back so the boss's map is
 reloaded, waits for the boss to be loaded, and sets its HP, locking on first for
 bosses that change phase only while locked on.
+
+`--title` presses E on a uinput keyboard (`scripts/title.py`), since the title menus
+do not take the mod's presses, five seconds apart, until `status` shows the player in
+the game. Like a real keyboard it needs the game window focused. It needs
+`/dev/uinput` writable by the logged-in user, which Steam's `60-steam-input.rules`
+already grants, and python3-libevdev.

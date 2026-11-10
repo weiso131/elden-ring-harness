@@ -29,6 +29,7 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 ./launch.sh                                  # 寫到 out/<日期-時間>/
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # 要放標記的 task group，或 `all`
 ./launch.sh --run "scripts/boss.sh radahn-dlc" # 模組可以回應後，自動執行一個指令
+./launch.sh --title                          # 自動按過標題畫面，載入最後一個存檔
 ```
 
 `launch.sh` 會開 MangoHud（給 `MANGOHUD=0` 就不開）、設好 `ERH_OUT`，並且在這個目錄以外啟動 me3：me3 會優先從
@@ -110,3 +111,7 @@ scripts/boss.sh radahn-dlc --no-hp     # 一階段
 
 它會關掉 boss 的旗標、傳送到圓桌廳堂再傳送回來（讓 boss 所在的地圖重新載入）、等 boss 載入，
 再設定它的 HP；只在鎖定時才會換階段的 boss，會先鎖定。
+
+`--title` 用 uinput 虛擬鍵盤按 E（`scripts/title.py`），因為標題選單不吃模組的按鍵。每 5 秒按一次，
+直到 `status` 顯示玩家進到遊戲為止。它跟真的鍵盤一樣，遊戲視窗要有焦點。需要登入的使用者能寫
+`/dev/uinput`（Steam 的 `60-steam-input.rules` 已經開放了）以及 python3-libevdev。
