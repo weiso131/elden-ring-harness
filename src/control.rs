@@ -135,6 +135,25 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             }
             None => format!("error unknown key: {name}\n"),
         },
+        ["scan"] => {
+            crate::input::scan(120);
+            "ok scanning raw input for 120 frames; see scan in status\n".into()
+        }
+        ["rawpress", idx, rest @ ..] => {
+            let Ok(idx) = idx.parse() else {
+                return format!("error not an index: {idx}\n");
+            };
+            let frames = match rest {
+                [] => 1,
+                [n] => match n.parse() {
+                    Ok(n) if n > 0 => n,
+                    _ => return format!("error not a frame count: {n}\n"),
+                },
+                _ => return "error usage: rawpress INDEX [FRAMES]\n".into(),
+            };
+            crate::input::hold(crate::input::Target::Raw(idx), frames);
+            format!("ok rawpress {idx} frames={frames}\n")
+        }
         ["press", name, rest @ ..] => {
             let Some(key) = crate::input::key(name) else {
                 return format!("error unknown key: {name}\n");
@@ -147,7 +166,7 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 },
                 _ => return "error usage: press KEY [FRAMES]\n".into(),
             };
-            crate::input::hold(key, frames);
+            crate::input::hold(crate::input::Target::Key(key), frames);
             format!("ok press {name} frames={frames}\n")
         }
         ["graces"] => match dump_graces(&dir.join("graces.tsv")) {
@@ -255,6 +274,9 @@ fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
     if let Some(on) = crate::input::polling() {
         let _ = writeln!(s, "pad_polling\t{}", if on { "on" } else { "off" });
+    }
+    if let Some(sc) = crate::input::scan_status() {
+        let _ = writeln!(s, "scan\t{sc}");
     }
     if let Some(p) = crate::input::probe_status() {
         let _ = writeln!(s, "probe\t{p}");

@@ -4,8 +4,16 @@ use eldenring::fd4::{FD4PadManager, FD4TaskData, InputType};
 use fromsoftware_shared::{FromStatic, RecurringTaskHandle, SharedTaskImpExt, Subclass};
 use std::sync::Mutex;
 
-/// Keys being held and for how many more frames.
-static HELD: Mutex<Vec<(UserInputKey, u32)>> = Mutex::new(Vec::new());
+/// What a press holds down: a game action, mapped through the in-game pad's
+/// bindings, or a raw virtual input index, which any pad reads, menus included.
+#[derive(Clone, Copy)]
+pub enum Target {
+    Key(UserInputKey),
+    Raw(usize),
+}
+
+/// Targets being held and for how many more frames.
+static HELD: Mutex<Vec<(Target, u32)>> = Mutex::new(Vec::new());
 
 pub fn key(name: &str) -> Option<UserInputKey> {
     Some(match name {
@@ -22,8 +30,24 @@ pub fn key(name: &str) -> Option<UserInputKey> {
     })
 }
 
-pub fn hold(key: UserInputKey, frames: u32) {
-    HELD.lock().unwrap().push((key, frames));
+pub fn hold(target: Target, frames: u32) {
+    HELD.lock().unwrap().push((target, frames));
+}
+
+/// Frames left to scan, and for each raw index seen down, in how many frames.
+type Scan = (u32, std::collections::BTreeMap<usize, u32>);
+static SCAN: Mutex<Option<Scan>> = Mutex::new(None);
+
+/// Records which raw indices are down over `frames` frames: press a key in the
+/// game while scanning to learn its index, e.g. a menu's confirm key.
+pub fn scan(frames: u32) {
+    *SCAN.lock().unwrap() = Some((frames, Default::default()));
+}
+
+pub fn scan_status() -> Option<String> {
+    let s = SCAN.lock().unwrap();
+    let (left, seen) = s.as_ref()?;
+    Some(format!("left={left} down={seen:?}"))
 }
 
 /// What a probe saw of one key: in how many frames it read as down in the
@@ -77,9 +101,21 @@ pub fn install(task: &CSTaskImp) -> RecurringTaskHandle<FD4TaskData> {
                 p.live += live as u32;
                 p.staged += staged as u32;
             }
+            if let Some((left, seen)) = SCAN.lock().unwrap().as_mut()
+                && *left > 0
+                && let Ok(d) = device()
+            {
+                *left -= 1;
+                let words = d.virtual_input_data.dynamic_bitset.as_slice().len();
+                for i in 0..words * 32 {
+                    if d.virtual_input_data.get_digital(i) {
+                        *seen.entry(i).or_default() += 1;
+                    }
+                }
+            }
             let mut held = HELD.lock().unwrap();
-            for (key, _) in held.iter() {
-                let _ = press(*key);
+            for (target, _) in held.iter() {
+                let _ = press(*target);
             }
             held.retain_mut(|(_, n)| {
                 *n -= 1;
@@ -90,10 +126,15 @@ pub fn install(task: &CSTaskImp) -> RecurringTaskHandle<FD4TaskData> {
     )
 }
 
+/// The device the pads read. On the title screen there may be no in-game pad
+/// yet, so the menu pad's device is the fallback.
 fn device() -> Result<&'static mut DLUserInputDeviceImpl, &'static str> {
     let man = unsafe { FD4PadManager::instance_mut() }.map_err(|_| "no pad manager")?;
-    let pad = man.get_in_game_pad_mut().ok_or("no in-game pad")?;
-    Ok(unsafe { pad.pad_device.as_mut().virtual_multi_device.as_mut() }.superclass_mut())
+    let mut pad_device = match man.get_in_game_pad_mut() {
+        Some(p) => p.pad_device,
+        None => man.get_menu_viewer_pad_mut().ok_or("no pad")?.pad_device,
+    };
+    Ok(unsafe { pad_device.as_mut().virtual_multi_device.as_mut() }.superclass_mut())
 }
 
 /// Virtual input indices the in-game pad reads for `key` as held down.
@@ -126,12 +167,15 @@ fn read(key: UserInputKey) -> Result<(bool, bool), &'static str> {
 /// over it, since which of the two survives until the pad reads is not known.
 /// The pad is also made to poll: presses only took effect while the game
 /// window had focus, and `allow_polling` is the pad's own on/off switch.
-fn press(key: UserInputKey) -> Result<(), &'static str> {
-    let idx = indices(key)?;
+fn press(target: Target) -> Result<(), &'static str> {
+    let idx = match target {
+        Target::Key(key) => indices(key)?,
+        Target::Raw(i) => vec![i],
+    };
     let man = unsafe { FD4PadManager::instance_mut() }.map_err(|_| "no pad manager")?;
-    man.get_in_game_pad_mut()
-        .ok_or("no in-game pad")?
-        .allow_polling = true;
+    if let Some(pad) = man.get_in_game_pad_mut() {
+        pad.allow_polling = true;
+    }
     let d = device()?;
     for i in idx {
         d.virtual_input_data.set_digital(i, true);

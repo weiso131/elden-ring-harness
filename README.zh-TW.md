@@ -72,6 +72,8 @@ cli/target/release/erh flagdump alive # 把所有開著的事件旗標 id 寫到
 cli/target/release/erh graces       # 把所有賜福和它們的解鎖、清除旗標寫到 graces.tsv
 cli/target/release/erh press skill 3 # 按住某個鍵 3 幀（預設 1 幀）
 cli/target/release/erh probe attack  # 120 幀內，計算模組看到 attack 被按住幾幀；結果在 status
+cli/target/release/erh scan          # 120 幀內，列出被按下的原始輸入編號；結果在 status
+cli/target/release/erh rawpress 252 3 # 按住某個原始輸入編號，例如用 scan 找到的選單按鍵
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案

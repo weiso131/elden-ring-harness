@@ -80,6 +80,8 @@ cli/target/release/erh flagdump alive # write the ids of all set event flags to 
 cli/target/release/erh graces       # list all graces with their unlock and cleared flags in graces.tsv
 cli/target/release/erh press skill 3 # hold a key for 3 frames (default 1)
 cli/target/release/erh probe attack  # for 120 frames, count when the mod sees attack held; see status
+cli/target/release/erh scan          # for 120 frames, list raw input indices seen down; see status
+cli/target/release/erh rawpress 252 3 # hold a raw input index, e.g. a menu key found by scan
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
