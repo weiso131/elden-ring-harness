@@ -56,19 +56,14 @@ def main():
 
     time.sleep(a.first)
     # A Chinese input method such as chewing takes E for itself, so switch to
-    # plain US keys while pressing and put the user's engine back afterwards.
+    # plain US keys; the player does not need the old one back.
     engine = ibus_engine()
     if engine and not engine.startswith("xkb:"):
         if ibus_engine(a.engine) is None:
             print(f"could not switch ibus from {engine} to {a.engine}", file=sys.stderr)
-            engine = None
         else:
-            print(f"ibus {engine} -> {a.engine} while pressing", flush=True)
-    try:
-        press(kb, a)
-    finally:
-        if engine and not engine.startswith("xkb:"):
-            ibus_engine(engine)
+            print(f"ibus {engine} -> {a.engine}", flush=True)
+    press(kb, a)
 
 
 def press(kb, a):
