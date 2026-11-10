@@ -26,8 +26,12 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 先安裝 [me3](https://github.com/garyttierney/me3)、備份存檔，然後：
 
 ```sh
-ERH_OUT=$PWD/out me3 launch -p profiles/erh.me3
+./launch.sh out
 ```
+
+`launch.sh` 會設好 `ERH_OUT`，並且在這個目錄以外啟動 me3：me3 會優先從
+`./target/x86_64-pc-windows-msvc/release` 找它自己的 Windows 執行檔，在這裡會找到本專案的
+編譯結果，遊戲就開不起來。
 
 me3 會讓遊戲保持離線，並改用存檔 `ERH0000.sl2`（第一次啟動時從目前的存檔複製）。
 沒有設 `ERH_OUT` 時，模組什麼都不做。

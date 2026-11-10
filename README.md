@@ -32,8 +32,12 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 Install [me3](https://github.com/garyttierney/me3), back up your save, then:
 
 ```sh
-ERH_OUT=$PWD/out me3 launch -p profiles/erh.me3
+./launch.sh out
 ```
+
+`launch.sh` sets `ERH_OUT` and starts me3 from outside this directory: me3 picks its
+own Windows binaries from `./target/x86_64-pc-windows-msvc/release` first, where it
+would find this project's build instead and the game would not start.
 
 me3 keeps the game offline and switches to the save `ERH0000.sl2`, copied from
 the current one on first launch. The mod does nothing unless `ERH_OUT` is set.
