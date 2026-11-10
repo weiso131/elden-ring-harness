@@ -20,6 +20,16 @@ import libevdev
 ERH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cli", "target", "release", "erh")
 
 
+def ibus_engine(name=None):
+    """Gets, or sets with `name`, the ibus engine; None if ibus is not there."""
+    try:
+        r = subprocess.run(["ibus", "engine"] + ([name] if name else []),
+                           capture_output=True, text=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
 def in_game():
     out = subprocess.run([ERH, "status"], capture_output=True, text=True).stdout
     return any(line == "stage\tin_game" for line in out.splitlines())
@@ -31,6 +41,7 @@ def main():
     # Presses closer together than this were not safe through the confirmations.
     p.add_argument("--gap", type=float, default=5, help="seconds between presses")
     p.add_argument("--tries", type=int, default=6, help="presses before giving up")
+    p.add_argument("--engine", default="xkb:us::eng", help="ibus engine to use while pressing")
     a = p.parse_args()
 
     d = libevdev.Device()
@@ -44,6 +55,23 @@ def main():
     time.sleep(1)
 
     time.sleep(a.first)
+    # A Chinese input method such as chewing takes E for itself, so switch to
+    # plain US keys while pressing and put the user's engine back afterwards.
+    engine = ibus_engine()
+    if engine and not engine.startswith("xkb:"):
+        if ibus_engine(a.engine) is None:
+            print(f"could not switch ibus from {engine} to {a.engine}", file=sys.stderr)
+            engine = None
+        else:
+            print(f"ibus {engine} -> {a.engine} while pressing", flush=True)
+    try:
+        press(kb, a)
+    finally:
+        if engine and not engine.startswith("xkb:"):
+            ibus_engine(engine)
+
+
+def press(kb, a):
     for i in range(a.tries):
         if in_game():
             print(f"in game after {i} presses")

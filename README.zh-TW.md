@@ -114,4 +114,5 @@ scripts/boss.sh radahn-dlc --no-hp     # 一階段
 
 `--title` 用 uinput 虛擬鍵盤按 E（`scripts/title.py`），因為標題選單不吃模組的按鍵。每 5 秒按一次，
 直到 `status` 顯示玩家進到遊戲為止。它跟真的鍵盤一樣，遊戲視窗要有焦點。需要登入的使用者能寫
-`/dev/uinput`（Steam 的 `60-steam-input.rules` 已經開放了）以及 python3-libevdev。
+`/dev/uinput`（Steam 的 `60-steam-input.rules` 已經開放了）以及 python3-libevdev。如果目前的 ibus 輸入法不是單純的鍵盤配置（例如新酷音會把 E 吃掉），
+按鍵期間會切到 `xkb:us::eng`，按完再切回來。

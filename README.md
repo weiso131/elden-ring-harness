@@ -132,4 +132,6 @@ bosses that change phase only while locked on.
 do not take the mod's presses, five seconds apart, until `status` shows the player in
 the game. Like a real keyboard it needs the game window focused. It needs
 `/dev/uinput` writable by the logged-in user, which Steam's `60-steam-input.rules`
-already grants, and python3-libevdev.
+already grants, and python3-libevdev. If an ibus input method other than a plain
+keyboard layout is active (chewing takes E for itself), it switches ibus to
+`xkb:us::eng` while pressing and back afterwards.
