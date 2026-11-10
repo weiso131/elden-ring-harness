@@ -79,6 +79,7 @@ cli/target/release/erh exterminate on # every hit by the player deals 9999999 da
 cli/target/release/erh flagdump alive # write the ids of all set event flags to flags-alive.txt
 cli/target/release/erh graces       # list all graces with their unlock and cleared flags in graces.tsv
 cli/target/release/erh press skill 3 # hold a key for 3 frames (default 1)
+cli/target/release/erh probe attack  # for 120 frames, count when the mod sees attack held; see status
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command

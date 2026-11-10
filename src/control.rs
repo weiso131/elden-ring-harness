@@ -128,6 +128,13 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             data.hp = (data.max_hp as i64 * pct.min(100) as i64 / 100) as i32;
             format!("ok target hp={}/{}\n", data.hp, data.max_hp)
         }
+        ["probe", name] => match crate::input::key(name) {
+            Some(key) => {
+                crate::input::probe(key, 120);
+                format!("ok probing {name} for 120 frames; see probe in status\n")
+            }
+            None => format!("error unknown key: {name}\n"),
+        },
         ["press", name, rest @ ..] => {
             let Some(key) = crate::input::key(name) else {
                 return format!("error unknown key: {name}\n");
@@ -246,6 +253,9 @@ fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
 
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
+    if let Some(p) = crate::input::probe_status() {
+        let _ = writeln!(s, "probe\t{p}");
+    }
     if let Ok(f) = unsafe { WorldChrManDbgFlags::instance() } {
         let state = |b: bool| if b { "on" } else { "off" };
         let _ = writeln!(s, "nodead\t{}", state(f.player_no_dead));
