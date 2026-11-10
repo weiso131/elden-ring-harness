@@ -41,6 +41,7 @@ pub fn serve(dir: &Path, interval: Duration) -> io::Result<()> {
     let _handle = task.run_recurring(
         move |_: &FD4TaskData| {
             frame += 1;
+            crate::input::hold_focus();
             let mut s = SHARED.lock().unwrap();
             while let Some((id, cmd)) = s.pending.pop_front() {
                 let out = run(&cmd, frame, &run_dir);

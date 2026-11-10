@@ -155,6 +155,17 @@ fn focus(pressing: bool) {
     }
 }
 
+/// Sets focus again at the start of the frame, before PadStep, in case the
+/// game recomputes it from the window every frame and overwrites the value
+/// set after PadStep.
+pub fn hold_focus() {
+    if SAVED_FOCUS.lock().unwrap().is_some()
+        && let Ok(man) = unsafe { DLUserInputManagerImpl::instance_mut() }
+    {
+        man.is_game_window_focused = true;
+    }
+}
+
 pub fn focused() -> Option<bool> {
     Some(
         unsafe { DLUserInputManagerImpl::instance() }
