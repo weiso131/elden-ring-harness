@@ -65,6 +65,7 @@ cli/target/release/erh nodead on     # HP 最低停在 1，不會死；`off` 取
 cli/target/release/erh warp 100001   # 用 BonfireWarpParam 的 row id 傳送到賜福
 cli/target/release/erh flag ID off   # 讀取（不給狀態）或設定事件旗標，例如 boss 的擊敗旗標
 cli/target/release/erh targethp 40   # 把鎖定中的敵人 HP 設成最大值的 40%
+cli/target/release/erh press skill 3 # 按住某個鍵 3 幀（預設 1 幀）
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案
@@ -74,3 +75,6 @@ cli/target/release/erh targethp 40   # 把鎖定中的敵人 HP 設成最大值�
 `warp` 呼叫的是遊戲自己的「傳送到賜福」。fromsoftware-rs 沒有這個函式的綁定，所以用位元組
 樣式找到它；樣式和呼叫方式取自 [Erd-Tools](https://github.com/Nordgaren/Erd-Tools)。row id 可以查 Erd-Tools 的 `BonfireWarpParam.txt`，例如 100001 是
 `[Stormveil Castle] Margit, the Fell Omen`（史東薇爾城的「惡兆妖鬼 瑪爾基特」賜福）。
+
+`press` 可用的鍵：`attack`、`strong`、`guard`、`skill`、`roll`、`jump`、`item`、`lockon`、`action`。
+按鍵寫進的是手把和鍵盤共用的虛擬輸入，所以會照玩家自己的按鍵設定。

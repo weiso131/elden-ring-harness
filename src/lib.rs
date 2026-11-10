@@ -1,5 +1,6 @@
 mod clock;
 mod control;
+mod input;
 mod tasks;
 mod warp;
 

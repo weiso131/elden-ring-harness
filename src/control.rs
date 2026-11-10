@@ -34,6 +34,7 @@ pub fn serve(dir: &Path, interval: Duration) -> io::Result<()> {
         .map_err(|e| io::Error::other(format!("CSTaskImp not found: {e:?}")))?;
     let mut frame = 0u64;
     // FrameBegin always has the game's own tasks, so it adds no group of its own.
+    let _input = crate::input::install(task);
     let _handle = task.run_recurring(
         move |_: &FD4TaskData| {
             frame += 1;
@@ -129,6 +130,21 @@ fn run(cmd: &str, frame: u64) -> String {
             let data = &mut target.modules.data;
             data.hp = (data.max_hp as i64 * pct.min(100) as i64 / 100) as i32;
             format!("ok target hp={}/{}\n", data.hp, data.max_hp)
+        }
+        ["press", name, rest @ ..] => {
+            let Some(key) = crate::input::key(name) else {
+                return format!("error unknown key: {name}\n");
+            };
+            let frames = match rest {
+                [] => 1,
+                [n] => match n.parse() {
+                    Ok(n) if n > 0 => n,
+                    _ => return format!("error not a frame count: {n}\n"),
+                },
+                _ => return "error usage: press KEY [FRAMES]\n".into(),
+            };
+            crate::input::hold(key, frames);
+            format!("ok press {name} frames={frames}\n")
         }
         ["nodead", on @ ("on" | "off")] => match unsafe { WorldChrManDbgFlags::instance_mut() } {
             Ok(f) => {

@@ -73,6 +73,7 @@ cli/target/release/erh nodead on     # HP stops at 1 instead of 0; `off` to undo
 cli/target/release/erh warp 100001   # warp to a grace by BonfireWarpParam row id
 cli/target/release/erh flag ID off   # read (no state) or set an event flag, e.g. a boss's defeated flag
 cli/target/release/erh targethp 40   # set the locked-on enemy's HP to 40% of max
+cli/target/release/erh press skill 3 # hold a key for 3 frames (default 1)
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
@@ -83,3 +84,7 @@ the next frame and answers in `cmd/<id>.out`. `status.tsv` is rewritten every 50
 fromsoftware-rs has no binding for it; the pattern and the call come from
 [Erd-Tools](https://github.com/Nordgaren/Erd-Tools). Row ids are listed in Erd-Tools' `BonfireWarpParam.txt`, e.g. 100001 is
 Margit, the Fell Omen.
+
+`press` keys: `attack`, `strong`, `guard`, `skill`, `roll`, `jump`, `item`,
+`lockon`, `action`. A press goes into the same virtual input the controller and
+keyboard feed, so it follows the player's key bindings.
