@@ -356,6 +356,9 @@ fn status(frame: u64) -> String {
         data.hp, data.max_hp, p.current_block_id, pos.x, pos.y, pos.z
     );
     if let Ok(w) = unsafe { WorldChrMan::instance() } {
+        // Characters the game has loaded around the player; a boss's arena
+        // shows more once the boss is in.
+        let _ = writeln!(s, "chars\t{}", w.chr_inses_by_distance.len());
         let locked = w.chr_ins_by_handle(&p.locked_on_enemy).is_some();
         let _ = writeln!(s, "locked\t{}", if locked { "on" } else { "off" });
         if let Some(t) = target(w) {
