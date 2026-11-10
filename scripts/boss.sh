@@ -28,7 +28,7 @@ erh=$here/../cli/target/release/erh
 table=$here/../bosses.tsv
 
 rows() { grep -v '^#' "$table" | grep -v '^$'; }
-list() { rows | awk -F'\t' '{ printf "%-12s %s%s\n", $1, $9, ($8 == "yes" ? "" : "  (not checked in game)") }'; }
+list() { rows | awk -F'\t' '{ printf "%-12s %s%s\n", $1, $10, ($9 == "yes" ? "" : "  (not checked in game)") }'; }
 
 boss= nodead=on nohit=off hp=table
 while [ $# -gt 0 ]; do
@@ -61,7 +61,7 @@ if [ -z "$boss" ]; then
 	esac
 	case $(ask "keep the player alive (nodead)? y/n" y) in n*) nodead=off ;; esac
 	case $(ask "enemy attacks miss the player (nohit)? y/n" n) in y*) nohit=on ;; esac
-	phase=$(rows | awk -F'\t' -v b="$boss" '$1 == b { print $5 }')
+	phase=$(rows | awk -F'\t' -v b="$boss" '$1 == b { print $6 }')
 	if [ "$phase" != - ] && [ -n "$phase" ]; then
 		hp=$(ask "set the boss's HP to % (none to skip)" "$phase")
 		[ "$hp" = none ] || [ -n "$hp" ] || hp=none
@@ -73,8 +73,8 @@ fi
 row=$(rows | awk -F'\t' -v b="$boss" '$1 == b')
 [ -n "$row" ] || { echo "no boss '$boss' in bosses.tsv; --list shows them" >&2; exit 2; }
 col() { echo "$row" | cut -f"$1"; }
-block=$(col 2) grace=$(col 3) flags=$(col 4) lock=$(col 6) esc=$(col 7)
-[ "$hp" = table ] && hp=$(col 5)
+block=$(col 2) grace=$(col 3) flags=$(col 4) fight=$(col 5) lock=$(col 7) esc=$(col 8)
+[ "$hp" = table ] && hp=$(col 6)
 [ "$hp" = - ] && hp=none
 
 field() { "$erh" status | awk -F'\t' -v k="$1" '$1 == k { print $2 }'; }
@@ -104,6 +104,9 @@ wait_for block = "$block"
 # Characters load a moment after the map does.
 wait_for chars -gt 0 30
 sleep 1
+# Warping into the arena skips the fog gate, whose event starts the fight;
+# these are the flags that event sets, found by diffing flagdumps around it.
+[ "$fight" = - ] || for f in $(echo "$fight" | tr , ' '); do "$erh" flag "$f" on; done
 
 if [ "$hp" != none ]; then
 	if [ "$lock" = yes ]; then

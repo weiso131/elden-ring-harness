@@ -1,13 +1,13 @@
 # One boss per row, for scripts/boss.sh. Tab-separated; lines starting with # are skipped.
-# id	block as `erh status` shows it	grace to warp to (BonfireWarpParam row)	flags to clear	HP % that starts the next phase (- for none)	lock on before setting HP	press Esc to skip the phase change cutscene	checked in game	name
-radahn-dlc	m20_01_00_00	200100	20010800,20010801	50	yes	yes	yes	Promised Consort Radahn (DLC)
-malenia	m15_00_00_00	150004	15000800,15000801	-	no	no	no	Malenia, Blade of Miquella
-godrick	m10_00_00_00	100000	10000800,10000801	50	no	no	no	Godrick the Grafted
-rennala	m14_00_00_00	140000	14000800,14000801	-	no	no	no	Rennala, Queen of the Full Moon
-rykard	m16_00_00_00	160000	16000800,16000801	-	no	no	no	Rykard, Lord of Blasphemy
-mohg	m12_05_00_00	120500	12050800,12050801	50	no	no	no	Mohg, Lord of Blood
-maliketh	m13_00_00_00	130000	13000800,13000801	50	no	no	no	Maliketh, the Black Blade
-morgott	m11_00_00_00	110000	11000800,11000801	50	no	no	no	Morgott, the Omen King
-godfrey	m11_05_00_00	110500	11050800,11050801	50	no	no	no	Godfrey, First Elden Lord / Hoarah Loux
-mohg-omen	m35_00_00_00	350000	35000800,35000801	-	no	no	no	Mohg, the Omen
-elden-beast	m19_00_00_00	190000	19000800,19000801	-	no	no	no	Radagon of the Golden Order / Elden Beast
+# id	block as `erh status` shows it	grace to warp to (BonfireWarpParam row)	flags to clear	flags to set once the boss is loaded, standing in for its fog gate (- for none)	HP % that starts the next phase (- for none)	lock on before setting HP	press Esc to skip the phase change cutscene	checked in game	name
+radahn-dlc	m20_01_00_00	200100	20010800,20010801	-	50	yes	yes	yes	Promised Consort Radahn (DLC)
+malenia	m15_00_00_00	150004	15000800,15000801	-	-	no	no	no	Malenia, Blade of Miquella
+godrick	m10_00_00_00	100000	10000800	10000801,10002805,10002810	50	no	no	no	Godrick the Grafted
+rennala	m14_00_00_00	140000	14000800,14000801	-	-	no	no	no	Rennala, Queen of the Full Moon
+rykard	m16_00_00_00	160000	16000800,16000801	-	-	no	no	no	Rykard, Lord of Blasphemy
+mohg	m12_05_00_00	120500	12050800,12050801	-	50	no	no	no	Mohg, Lord of Blood
+maliketh	m13_00_00_00	130000	13000800,13000801	-	50	no	no	no	Maliketh, the Black Blade
+morgott	m11_00_00_00	110000	11000800,11000801	-	50	no	no	no	Morgott, the Omen King
+godfrey	m11_05_00_00	110500	11050800,11050801	-	50	no	no	no	Godfrey, First Elden Lord / Hoarah Loux
+mohg-omen	m35_00_00_00	350000	35000800,35000801	-	-	no	no	no	Mohg, the Omen
+elden-beast	m19_00_00_00	190000	19000800,19000801	-	-	no	no	no	Radagon of the Golden Order / Elden Beast
