@@ -1,5 +1,6 @@
 use eldenring::cs::{
-    CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, WorldChrMan, WorldChrManDbgFlags,
+    BonfireWarpParam, CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, SoloParamRepository,
+    WorldChrMan, WorldChrManDbgFlags,
 };
 use eldenring::fd4::FD4TaskData;
 use fromsoftware_shared::{FromStatic, SharedTaskImpExt};
@@ -147,6 +148,10 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             crate::input::hold(key, frames);
             format!("ok press {name} frames={frames}\n")
         }
+        ["graces"] => match dump_graces(&dir.join("graces.tsv")) {
+            Ok(n) => format!("ok graces rows={n} in graces.tsv\n"),
+            Err(e) => format!("error {e}\n"),
+        },
         ["flagdump", name] => match dump_flags(&dir.join(format!("flags-{name}.txt"))) {
             Ok(n) => format!("ok flagdump {name} on={n}\n"),
             Err(e) => format!("error {e}\n"),
@@ -168,6 +173,37 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
         }
         _ => format!("error unknown command: {cmd}\n"),
     }
+}
+
+/// Lists every grace: its row id for `warp`, the flag that unlocks it, and the
+/// grace's cleared flag (`clearedEventFlagId`), with their current state. On a
+/// boss grace the cleared flag is expected to be the boss's defeated flag.
+fn dump_graces(path: &Path) -> Result<usize, String> {
+    let params = unsafe { SoloParamRepository::instance() }.map_err(|e| format!("{e:?}"))?;
+    let flags = &unsafe { CSEventFlagMan::instance() }
+        .map_err(|e| format!("{e:?}"))?
+        .virtual_memory_flag;
+    let on = |f: u32| if f != 0 && flags.get_flag(f) { 1 } else { 0 };
+    let mut out = String::from(
+        "row\tentity\tarea\tgrid_x\tgrid_z\tunlock_flag\tunlocked\tcleared_flag\tcleared\n",
+    );
+    let mut n = 0;
+    for (id, row) in params.rows::<BonfireWarpParam>() {
+        let (unlock, cleared) = (row.eventflag_id(), row.cleared_event_flag_id());
+        let _ = writeln!(
+            out,
+            "{id}\t{}\t{}\t{}\t{}\t{unlock}\t{}\t{cleared}\t{}",
+            row.bonfire_entity_id(),
+            row.area_no(),
+            row.grid_x_no(),
+            row.grid_z_no(),
+            on(unlock),
+            on(cleared)
+        );
+        n += 1;
+    }
+    fs::write(path, out).map_err(|e| e.to_string())?;
+    Ok(n)
 }
 
 /// Writes every flag that is on, one id per line, so two dumps can be diffed to

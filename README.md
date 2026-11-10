@@ -75,6 +75,7 @@ cli/target/release/erh flag ID off   # read (no state) or set an event flag, e.g
 cli/target/release/erh targethp 40   # set the locked-on enemy's HP to 40% of max
 cli/target/release/erh exterminate on # every hit by the player deals 9999999 damage
 cli/target/release/erh flagdump alive # write the ids of all set event flags to flags-alive.txt
+cli/target/release/erh graces       # list all graces with their unlock and cleared flags in graces.tsv
 cli/target/release/erh press skill 3 # hold a key for 3 frames (default 1)
 ```
 
