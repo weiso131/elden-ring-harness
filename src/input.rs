@@ -124,12 +124,24 @@ fn read(key: UserInputKey) -> Result<(bool, bool), &'static str> {
 
 /// Sets the key in both the live input and the staged copy the device copies
 /// over it, since which of the two survives until the pad reads is not known.
+/// The pad is also made to poll: presses only took effect while the game
+/// window had focus, and `allow_polling` is the pad's own on/off switch.
 fn press(key: UserInputKey) -> Result<(), &'static str> {
     let idx = indices(key)?;
+    let man = unsafe { FD4PadManager::instance_mut() }.map_err(|_| "no pad manager")?;
+    man.get_in_game_pad_mut()
+        .ok_or("no in-game pad")?
+        .allow_polling = true;
     let d = device()?;
     for i in idx {
         d.virtual_input_data.set_digital(i, true);
         d.initial_virtual_input_data.set_digital(i, true);
     }
     Ok(())
+}
+
+/// Whether the in-game pad is polling input at all right now.
+pub fn polling() -> Option<bool> {
+    let man = unsafe { FD4PadManager::instance() }.ok()?;
+    Some(man.get_in_game_pad()?.allow_polling)
 }

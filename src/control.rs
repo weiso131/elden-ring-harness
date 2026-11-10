@@ -253,6 +253,9 @@ fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
 
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
+    if let Some(on) = crate::input::polling() {
+        let _ = writeln!(s, "pad_polling\t{}", if on { "on" } else { "off" });
+    }
     if let Some(p) = crate::input::probe_status() {
         let _ = writeln!(s, "probe\t{p}");
     }
