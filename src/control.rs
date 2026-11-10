@@ -133,11 +133,44 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             let state = if flags.get_flag(id) { "on" } else { "off" };
             format!("ok flag {id}={state}\n")
         }
-        ["targethp", pct] => {
+        ["chars"] => {
+            let Ok(w) = (unsafe { WorldChrMan::instance() }) else {
+                return "error no WorldChrMan\n".into();
+            };
+            let mut out = String::from("ok rank\thp\tmax_hp\tchara_init_param\tworld\n");
+            for (i, c) in by_hp(w).iter().take(10).enumerate() {
+                let c = unsafe { c.as_ref() };
+                let (d, p) = (&c.modules.data, &c.modules.physics.position);
+                let _ = writeln!(
+                    out,
+                    "{}\t{}\t{}\t{}\t{:.2} {:.2} {:.2}",
+                    i + 1,
+                    d.hp,
+                    d.max_hp,
+                    d.chara_init_param_id,
+                    p.0,
+                    p.1,
+                    p.2
+                );
+            }
+            out
+        }
+        ["targethp", pct, rest @ ..] if rest.len() <= 1 => {
             let Ok(pct) = pct.parse::<u32>() else {
                 return format!("error not a percentage: {pct}\n");
             };
-            let Some(mut t) = unsafe { WorldChrMan::instance() }.ok().and_then(target) else {
+            let Ok(w) = (unsafe { WorldChrMan::instance() }) else {
+                return "error no WorldChrMan\n".into();
+            };
+            // A rank, as `chars` lists them, picks a character over the target.
+            let t = match rest {
+                [rank] => match rank.parse::<usize>() {
+                    Ok(r) if r > 0 => by_hp(w).get(r - 1).copied(),
+                    _ => return format!("error not a rank: {rank}\n"),
+                },
+                _ => target(w),
+            };
+            let Some(mut t) = t else {
                 return "error no target\n".into();
             };
             let data = &mut unsafe { t.as_mut() }.modules.data;
@@ -355,6 +388,24 @@ fn dump_flags(path: &Path) -> Result<usize, String> {
 
 /// The enemy the player is locked on to, else the loaded character with the
 /// most max HP, which in a boss arena is normally the boss.
+/// Loaded characters other than the player, most max HP first. A fight can
+/// hold several big ones, such as Rykard hidden under the arena while his
+/// serpent fights, so they are picked by rank.
+fn by_hp(w: &WorldChrMan) -> Vec<NonNull<ChrIns>> {
+    let Some(p) = w.main_player.as_ref() else {
+        return Vec::new();
+    };
+    let me: *const ChrIns = &p.chr_ins;
+    let mut v: Vec<_> = w
+        .chr_inses_by_distance
+        .iter()
+        .map(|e| e.chr_ins)
+        .filter(|c| !std::ptr::eq(c.as_ptr(), me))
+        .collect();
+    v.sort_by_key(|c| std::cmp::Reverse(unsafe { c.as_ref() }.modules.data.max_hp));
+    v
+}
+
 fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
     let p = w.main_player.as_ref()?;
     if let Some(t) = w.chr_ins_by_handle(&p.locked_on_enemy) {

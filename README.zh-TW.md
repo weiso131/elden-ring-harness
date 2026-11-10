@@ -85,6 +85,8 @@ cli/target/release/erh warp 100001   # 用 BonfireWarpParam 的 row id 傳送到
 cli/target/release/erh flag ID off   # 讀取（不給狀態）或設定事件旗標，例如 boss 的擊敗旗標
 cli/target/release/erh targethp 40   # 把目標的 HP 設成最大值的 40%：鎖定中的敵人，沒鎖定時是
                                      # 已載入角色中最大 HP 最高的那個
+cli/target/release/erh targethp 1 2  # 同上，但對象是最大 HP 排第 2 的角色
+cli/target/release/erh chars         # 列出已載入角色中最大 HP 最高的十個
 cli/target/release/erh nohit on      # 敵人的攻擊打不到玩家
 cli/target/release/erh lockhp 50     # 按一次鎖定，鎖到的那一幀立刻設定敵人的 HP
 cli/target/release/erh tp X Y Z [Q0 Q1 Q2 Q3] # 把玩家移到某個世界座標和朝向
