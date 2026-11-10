@@ -19,8 +19,6 @@ What the mod does inside the game:
   its second phase, keep the player alive
 - presses game actions, so a run needs no hands
 
-Notes on what it builds on are in [docs/research.md](docs/research.md).
-
 ## Only for experiments
 
 The mod is never loaded in normal play. Launching from Steam goes through

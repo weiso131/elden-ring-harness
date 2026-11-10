@@ -2,3 +2,4 @@ target/
 out/
 __pycache__/
 /config
+/docs/research.md

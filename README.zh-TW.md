@@ -15,8 +15,6 @@ TSV，時間戳是 Linux 的 CLOCK_MONOTONIC_RAW（Wine 的 QueryPerformanceCoun
 - 佈置情境：傳送到賜福、靠旗標讓 boss 復活、讓 boss 進二階段、讓玩家不會死
 - 按遊戲裡的動作鍵，跑實驗不需要人手
 
-模組依靠的東西整理在 [docs/research.md](docs/research.md)。
-
 ## 只在實驗時使用
 
 平常玩不會載入這個模組。從 Steam 啟動會走 `start_protected_game.exe`，EAC 開著，遊戲維持原狀。
