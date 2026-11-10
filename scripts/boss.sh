@@ -130,7 +130,12 @@ if [ "$hp" != none ]; then
 			sleep 0.1
 		done
 	else
-		"$erh" targethp "$hp"
+		# PCT@RANK picks a character by HP rank, for fights where the one to
+		# hit is not the nearest of the big ones.
+		case $hp in
+		*@*) "$erh" targethp "${hp%@*}" "${hp#*@}" ;;
+		*) "$erh" targethp "$hp" ;;
+		esac
 	fi
 	if [ "$esc" = yes ]; then
 		# The phase change cutscene starts a moment after the HP drops. Esc
