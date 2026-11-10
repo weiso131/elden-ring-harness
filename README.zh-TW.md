@@ -62,8 +62,13 @@ cargo build --release --manifest-path cli/Cargo.toml
 cli/target/release/erh status        # 目前階段、玩家的 HP、所在區塊與位置
 cli/target/release/erh ping
 cli/target/release/erh nodead on     # HP 最低停在 1，不會死；`off` 取消
+cli/target/release/erh warp 100001   # 用 BonfireWarpParam 的 row id 傳送到賜福
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案
 `cmd/<id>.cmd`，模組在下一幀開頭、在遊戲的主執行緒上執行，結果寫進 `cmd/<id>.out`。
 `status.tsv` 每 50ms 更新一次。
+
+`warp` 呼叫的是遊戲自己的「傳送到賜福」。fromsoftware-rs 沒有這個函式的綁定，所以用位元組
+樣式找到它；樣式和呼叫方式取自 [Erd-Tools](https://github.com/Nordgaren/Erd-Tools)。row id 可以查 Erd-Tools 的 `BonfireWarpParam.txt`，例如 100001 是
+`[Stormveil Castle] Margit, the Fell Omen`（史東薇爾城的「惡兆妖鬼 瑪爾基特」賜福）。

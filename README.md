@@ -70,8 +70,14 @@ cargo build --release --manifest-path cli/Cargo.toml
 cli/target/release/erh status        # stage, HP, block and position of the player
 cli/target/release/erh ping
 cli/target/release/erh nodead on     # HP stops at 1 instead of 0; `off` to undo
+cli/target/release/erh warp 100001   # warp to a grace by BonfireWarpParam row id
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
 is a file `cmd/<id>.cmd`; the mod runs it on the game's main thread at the start of
 the next frame and answers in `cmd/<id>.out`. `status.tsv` is rewritten every 50 ms.
+
+`warp` calls the game's own warp-to-grace, found by a byte pattern because
+fromsoftware-rs has no binding for it; the pattern and the call come from
+[Erd-Tools](https://github.com/Nordgaren/Erd-Tools). Row ids are listed in Erd-Tools' `BonfireWarpParam.txt`, e.g. 100001 is
+Margit, the Fell Omen.

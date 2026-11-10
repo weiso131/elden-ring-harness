@@ -87,6 +87,13 @@ fn run(cmd: &str, frame: u64) -> String {
     let args: Vec<&str> = cmd.split_whitespace().collect();
     match args.as_slice() {
         ["ping"] => format!("ok frame={frame}\n"),
+        ["warp", id] => match id.parse() {
+            Ok(id) => match crate::warp::to_grace(id) {
+                Ok(entity) => format!("ok warping grace={id} entity={entity}\n"),
+                Err(e) => format!("error {e}\n"),
+            },
+            Err(_) => format!("error not a grace id: {id}\n"),
+        },
         ["nodead", on @ ("on" | "off")] => match unsafe { WorldChrManDbgFlags::instance_mut() } {
             Ok(f) => {
                 // The game keeps the player's HP at 1 instead of letting it reach 0.
