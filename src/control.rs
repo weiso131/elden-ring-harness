@@ -146,14 +146,21 @@ fn run(cmd: &str, frame: u64) -> String {
             crate::input::hold(key, frames);
             format!("ok press {name} frames={frames}\n")
         }
-        ["nodead", on @ ("on" | "off")] => match unsafe { WorldChrManDbgFlags::instance_mut() } {
-            Ok(f) => {
-                // The game keeps the player's HP at 1 instead of letting it reach 0.
-                f.player_no_dead = *on == "on";
-                format!("ok nodead={on}\n")
+        [name @ ("nodead" | "exterminate"), on @ ("on" | "off")] => {
+            match unsafe { WorldChrManDbgFlags::instance_mut() } {
+                Ok(f) => {
+                    let on = *on == "on";
+                    match *name {
+                        // The game keeps the player's HP at 1 instead of letting it reach 0.
+                        "nodead" => f.player_no_dead = on,
+                        // Every hit by the player deals 9999999 damage.
+                        _ => f.player_exterminate = on,
+                    }
+                    format!("ok {name}={}\n", if on { "on" } else { "off" })
+                }
+                Err(e) => format!("error debug flags not found: {e:?}\n"),
             }
-            Err(e) => format!("error debug flags not found: {e:?}\n"),
-        },
+        }
         _ => format!("error unknown command: {cmd}\n"),
     }
 }
@@ -161,7 +168,9 @@ fn run(cmd: &str, frame: u64) -> String {
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
     if let Ok(f) = unsafe { WorldChrManDbgFlags::instance() } {
-        let _ = writeln!(s, "nodead\t{}", if f.player_no_dead { "on" } else { "off" });
+        let state = |b: bool| if b { "on" } else { "off" };
+        let _ = writeln!(s, "nodead\t{}", state(f.player_no_dead));
+        let _ = writeln!(s, "exterminate\t{}", state(f.player_exterminate));
     }
     let player = unsafe { WorldChrMan::instance() }
         .ok()

@@ -65,6 +65,7 @@ cli/target/release/erh nodead on     # HP 最低停在 1，不會死；`off` 取
 cli/target/release/erh warp 100001   # 用 BonfireWarpParam 的 row id 傳送到賜福
 cli/target/release/erh flag ID off   # 讀取（不給狀態）或設定事件旗標，例如 boss 的擊敗旗標
 cli/target/release/erh targethp 40   # 把鎖定中的敵人 HP 設成最大值的 40%
+cli/target/release/erh exterminate on # 玩家每一擊都造成 9999999 傷害
 cli/target/release/erh press skill 3 # 按住某個鍵 3 幀（預設 1 幀）
 ```
 
@@ -78,3 +79,7 @@ cli/target/release/erh press skill 3 # 按住某個鍵 3 幀（預設 1 幀）
 
 `press` 可用的鍵：`attack`、`strong`、`guard`、`skill`、`roll`、`jump`、`item`、`lockon`、`action`。
 按鍵寫進的是手把和鍵盤共用的虛擬輸入，所以會照玩家自己的按鍵設定。
+
+對兩階段的 boss 用 `targethp 0`，會直接把它打死，不會進二階段；`targethp 1` 則什麼都不會發生
+（瑪蓮妮亞實測如此）。換階段很可能是掛在「受到傷害」的流程上，而直接寫 HP 跳過了這個流程。
+`exterminate on` 再打一下，是想改走受傷害的流程來結束一個階段，還沒實測。
