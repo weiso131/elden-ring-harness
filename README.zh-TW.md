@@ -84,7 +84,7 @@ cli/target/release/erh nodead on     # HP 最低停在 1，不會死；`off` 取
 cli/target/release/erh warp 100001   # 用 BonfireWarpParam 的 row id 傳送到賜福
 cli/target/release/erh flag ID off   # 讀取（不給狀態）或設定事件旗標，例如 boss 的擊敗旗標
 cli/target/release/erh targethp 40   # 把目標的 HP 設成最大值的 40%：鎖定中的敵人，沒鎖定時是
-                                     # 已載入角色中最大 HP 最高的那個
+                                     # 最大 HP 前三高的角色中最近的那個
 cli/target/release/erh targethp 1 2  # 同上，但對象是最大 HP 排第 2 的角色
 cli/target/release/erh chars         # 列出已載入角色中最大 HP 最高的十個
 cli/target/release/erh nohit on      # 敵人的攻擊打不到玩家

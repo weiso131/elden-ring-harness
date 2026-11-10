@@ -386,8 +386,6 @@ fn dump_flags(path: &Path) -> Result<usize, String> {
     Ok(n)
 }
 
-/// The enemy the player is locked on to, else the loaded character with the
-/// most max HP, which in a boss arena is normally the boss.
 /// Loaded characters other than the player, most max HP first. A fight can
 /// hold several big ones, such as Rykard hidden under the arena while his
 /// serpent fights, so they are picked by rank.
@@ -406,17 +404,25 @@ fn by_hp(w: &WorldChrMan) -> Vec<NonNull<ChrIns>> {
     v
 }
 
+/// The enemy the player is locked on to, else the nearest of the three
+/// loaded characters with the most max HP. Nearest, not toughest: a fight can
+/// keep its next phase's character loaded out of reach, as Rykard waits under
+/// his arena with more HP than the serpent the player fights.
 fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
     let p = w.main_player.as_ref()?;
     if let Some(t) = w.chr_ins_by_handle(&p.locked_on_enemy) {
         return Some(NonNull::from(t));
     }
-    let me: *const ChrIns = &p.chr_ins;
-    w.chr_inses_by_distance
-        .iter()
-        .map(|e| e.chr_ins)
-        .filter(|c| !std::ptr::eq(c.as_ptr(), me))
-        .max_by_key(|c| unsafe { c.as_ref() }.modules.data.max_hp)
+    let me = &p.chr_ins.modules.physics.position;
+    let dist = |c: &NonNull<ChrIns>| {
+        let t = &unsafe { c.as_ref() }.modules.physics.position;
+        let (dx, dy, dz) = (t.0 - me.0, t.1 - me.1, t.2 - me.2);
+        dx * dx + dy * dy + dz * dz
+    };
+    by_hp(w)
+        .into_iter()
+        .take(3)
+        .min_by(|a, b| dist(a).total_cmp(&dist(b)))
 }
 
 fn lock_hp_step() {
