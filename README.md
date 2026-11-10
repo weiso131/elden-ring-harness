@@ -34,6 +34,7 @@ Install [me3](https://github.com/garyttierney/me3), back up your save, then:
 ```sh
 ./launch.sh                                  # writes to out/<date-time>/
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # task groups to mark, or `all`
+./launch.sh --run scripts/radahn-p2.sh       # run a script once the mod answers
 ```
 
 `launch.sh` turns on MangoHud unless `MANGOHUD=0` is given, sets `ERH_OUT`, and starts me3 from outside this directory: me3 picks its

@@ -28,6 +28,7 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 ```sh
 ./launch.sh                                  # 寫到 out/<日期-時間>/
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # 要放標記的 task group，或 `all`
+./launch.sh --run scripts/radahn-p2.sh       # 模組可以回應後，自動執行一個腳本
 ```
 
 `launch.sh` 會開 MangoHud（給 `MANGOHUD=0` 就不開）、設好 `ERH_OUT`，並且在這個目錄以外啟動 me3：me3 會優先從

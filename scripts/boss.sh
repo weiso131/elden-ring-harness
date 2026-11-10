@@ -12,8 +12,8 @@ block=$1 grace=$2 hp=$3
 shift 3
 
 field() { "$erh" status | awk -F'\t' -v k="$1" '$1 == k { print $2 }'; }
-wait_for() { # wait_for KEY OP VALUE, OP is = or !=
-	for _ in $(seq 120); do
+wait_for() { # wait_for KEY OP VALUE [SECONDS], OP is = or !=
+	for _ in $(seq $((${4:-60} * 2))); do
 		[ "$(field "$1")" "$2" "$3" ] && return
 		sleep 0.5
 	done
@@ -21,6 +21,8 @@ wait_for() { # wait_for KEY OP VALUE, OP is = or !=
 	exit 1
 }
 
+# Started by launch.sh --run, the game may still be on the title screen.
+wait_for stage = in_game 600
 "$erh" nodead on
 "$erh" nohit on
 for f in "$@"; do "$erh" flag "$f" off; done
