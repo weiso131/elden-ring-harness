@@ -76,6 +76,7 @@ cli/target/release/erh flag ID off   # read (no state) or set an event flag, e.g
 cli/target/release/erh targethp 40   # set the target's HP to 40% of max: the locked-on enemy, else the
                                      # loaded character with the most max HP
 cli/target/release/erh nohit on      # enemy attacks do not hit the player
+cli/target/release/erh lockhp 50     # press lockon once, then set the locked enemy's HP the frame it locks
 cli/target/release/erh exterminate on # every hit by the player deals 9999999 damage
 cli/target/release/erh flagdump alive # write the ids of all set event flags to flags-alive.txt
 cli/target/release/erh graces       # list all graces with their unlock and cleared flags in graces.tsv

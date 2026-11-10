@@ -1,6 +1,6 @@
 use eldenring::cs::{
     BonfireWarpParam, CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, ChrIns, SoloParamRepository,
-    WorldChrMan, WorldChrManDbgFlags,
+    UserInputKey, WorldChrMan, WorldChrManDbgFlags,
 };
 use eldenring::fd4::FD4TaskData;
 use fromsoftware_shared::{FromStatic, SharedTaskImpExt};
@@ -19,6 +19,20 @@ struct Shared {
     done: Vec<(String, String)>,
     status: String,
 }
+
+/// A lockhp in progress: HP share to set, frames left to wait for the lock,
+/// and how the last one ended.
+struct LockHp {
+    pct: u32,
+    left: u32,
+    result: String,
+}
+
+static LOCK_HP: Mutex<LockHp> = Mutex::new(LockHp {
+    pct: 0,
+    left: 0,
+    result: String::new(),
+});
 
 static SHARED: Mutex<Shared> = Mutex::new(Shared {
     pending: VecDeque::new(),
@@ -46,6 +60,7 @@ pub fn serve(dir: &Path, interval: Duration) -> io::Result<()> {
                 let out = run(&cmd, frame, &run_dir);
                 s.done.push((id, out));
             }
+            lock_hp_step();
             s.status = status(frame);
         },
         CSTaskGroupIndex::FrameBegin,
@@ -127,6 +142,23 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             let data = &mut unsafe { t.as_mut() }.modules.data;
             data.hp = (data.max_hp as i64 * pct.min(100) as i64 / 100) as i32;
             format!("ok target hp={}/{}\n", data.hp, data.max_hp)
+        }
+        ["lockhp", pct] => {
+            let Ok(pct) = pct.parse::<u32>() else {
+                return format!("error not a percentage: {pct}\n");
+            };
+            // A second lockon press would undo the lock, so press once and set
+            // HP the frame the lock appears.
+            crate::input::hold(
+                crate::input::Target::Key(UserInputKey::ResetCameraTapped),
+                2,
+            );
+            *LOCK_HP.lock().unwrap() = LockHp {
+                pct: pct.min(100),
+                left: 120,
+                result: "waiting".into(),
+            };
+            "ok lockhp waiting for a lock; see lockhp in status\n".into()
         }
         ["probe", name] => match crate::input::key(name) {
             Some(key) => {
@@ -270,8 +302,34 @@ fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
         .max_by_key(|c| unsafe { c.as_ref() }.modules.data.max_hp)
 }
 
+fn lock_hp_step() {
+    let mut l = LOCK_HP.lock().unwrap();
+    if l.left == 0 {
+        return;
+    }
+    l.left -= 1;
+    let Ok(w) = (unsafe { WorldChrMan::instance_mut() }) else {
+        return;
+    };
+    let Some(handle) = w.main_player.as_ref().map(|p| p.locked_on_enemy) else {
+        return;
+    };
+    if let Some(t) = w.chr_ins_by_handle_mut(&handle) {
+        let data = &mut t.modules.data;
+        data.hp = (data.max_hp as i64 * l.pct as i64 / 100) as i32;
+        l.result = format!("done hp={}/{}", data.hp, data.max_hp);
+        l.left = 0;
+    } else if l.left == 0 {
+        l.result = "no lock".into();
+    }
+}
+
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
+    let lock_hp = LOCK_HP.lock().unwrap().result.clone();
+    if !lock_hp.is_empty() {
+        let _ = writeln!(s, "lockhp\t{lock_hp}");
+    }
     if let Some(sc) = crate::input::scan_status() {
         let _ = writeln!(s, "scan\t{sc}");
     }

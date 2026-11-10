@@ -68,6 +68,7 @@ cli/target/release/erh flag ID off   # 讀取（不給狀態）或設定事件�
 cli/target/release/erh targethp 40   # 把目標的 HP 設成最大值的 40%：鎖定中的敵人，沒鎖定時是
                                      # 已載入角色中最大 HP 最高的那個
 cli/target/release/erh nohit on      # 敵人的攻擊打不到玩家
+cli/target/release/erh lockhp 50     # 按一次鎖定，鎖到的那一幀立刻設定敵人的 HP
 cli/target/release/erh exterminate on # 玩家每一擊都造成 9999999 傷害
 cli/target/release/erh flagdump alive # 把所有開著的事件旗標 id 寫到 flags-alive.txt
 cli/target/release/erh graces       # 把所有賜福和它們的解鎖、清除旗標寫到 graces.tsv
