@@ -106,8 +106,10 @@ pub fn install(task: &CSTaskImp) -> RecurringTaskHandle<FD4TaskData> {
                 && let Ok(d) = device()
             {
                 *left -= 1;
-                let words = d.virtual_input_data.dynamic_bitset.as_slice().len();
-                for i in 0..words * 32 {
+                // integer_count counts bytes (bits / 32 * 4, per the library),
+                // so reading that many u32s runs past the bitset.
+                let bits = d.virtual_input_data.dynamic_bitset.integer_count * 8;
+                for i in 0..bits {
                     if d.virtual_input_data.get_digital(i) {
                         *seen.entry(i).or_default() += 1;
                     }
