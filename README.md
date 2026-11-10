@@ -120,7 +120,8 @@ fromsoftware-rs has no binding for it; the pattern and the call come from
 Margit, the Fell Omen.
 
 `press` keys: `attack`, `strong`, `guard`, `skill`, `roll`, `jump`, `item`,
-`lockon`, `action`. A press goes into the same virtual input the controller and
+`lockon`, `action`, and the movement directions `forward`, `back`, `left`, `right`,
+pushed all the way. A press goes into the same virtual input the controller and
 keyboard feed, so it follows the player's key bindings. Presses only reach the game
 while its window has focus, so run `erh` from somewhere that does not take it, such
 as ssh from another device.

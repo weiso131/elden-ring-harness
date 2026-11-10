@@ -15,6 +15,9 @@ pub enum Target {
     Dik(u8),
     /// A mouse button in the mouse device's own state.
     Mouse(u8),
+    /// A movement action pushed all the way, through the in-game pad's analog
+    /// bindings: movement is a stick, not a button.
+    Stick(UserInputKey),
 }
 
 /// Targets being held and for how many more frames.
@@ -31,6 +34,16 @@ pub fn key(name: &str) -> Option<UserInputKey> {
         "item" => UserInputKey::UseItem,
         "lockon" => UserInputKey::ResetCameraTapped,
         "action" => UserInputKey::EventAction,
+        _ => return None,
+    })
+}
+
+pub fn stick(name: &str) -> Option<UserInputKey> {
+    Some(match name {
+        "forward" => UserInputKey::MoveForwards,
+        "back" => UserInputKey::MoveBackwards,
+        "left" => UserInputKey::MoveLeft,
+        "right" => UserInputKey::MoveRight,
         _ => return None,
     })
 }
@@ -146,6 +159,10 @@ fn device() -> Result<&'static mut DLUserInputDeviceImpl, &'static str> {
 
 /// Virtual input indices the in-game pad reads for `key` as held down.
 fn indices(key: UserInputKey) -> Result<Vec<usize>, &'static str> {
+    indices_of(key, InputType::AreKeysDown)
+}
+
+fn indices_of(key: UserInputKey, kind: InputType) -> Result<Vec<usize>, &'static str> {
     let man = unsafe { FD4PadManager::instance() }.map_err(|_| "no pad manager")?;
     let pad = man.get_in_game_pad().ok_or("no in-game pad")?;
     let group = unsafe { pad.input_type_group.as_ref() }
@@ -154,7 +171,7 @@ fn indices(key: UserInputKey) -> Result<Vec<usize>, &'static str> {
     let key_assign = unsafe { pad.key_assign.as_ref() };
     Ok(group
         .iter()
-        .filter(|(_, t)| matches!(t, InputType::AreKeysDown))
+        .filter(|(_, t)| *t == kind)
         .filter_map(|(m, _)| key_assign.get_virtual_input_index(m))
         .map(|i| i as usize)
         .collect())
@@ -182,6 +199,15 @@ fn press(target: Target) -> Result<(), &'static str> {
                 .map_err(|_| "no input manager")?;
             let kb = man.get_keyboard_device_mut().ok_or("no keyboard device")?;
             kb.di_keyboard_state[k as usize] = 0x80;
+            return Ok(());
+        }
+        Target::Stick(key) => {
+            let idx = indices_of(key, InputType::IsStickMoving)?;
+            let d = device()?;
+            for i in idx {
+                d.virtual_input_data.set_analog(i, 1.0);
+                d.initial_virtual_input_data.set_analog(i, 1.0);
+            }
             return Ok(());
         }
         Target::Mouse(b) => {

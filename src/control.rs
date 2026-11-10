@@ -221,8 +221,10 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             format!("ok rawpress {idx} frames={frames}\n")
         }
         ["press", name, rest @ ..] => {
-            let Some(key) = crate::input::key(name) else {
-                return format!("error unknown key: {name}\n");
+            let target = match (crate::input::key(name), crate::input::stick(name)) {
+                (Some(k), _) => crate::input::Target::Key(k),
+                (_, Some(k)) => crate::input::Target::Stick(k),
+                _ => return format!("error unknown key: {name}\n"),
             };
             let frames = match rest {
                 [] => 1,
@@ -232,7 +234,7 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 },
                 _ => return "error usage: press KEY [FRAMES]\n".into(),
             };
-            crate::input::hold(crate::input::Target::Key(key), frames);
+            crate::input::hold(target, frames);
             format!("ok press {name} frames={frames}\n")
         }
         ["graces"] => match dump_graces(&dir.join("graces.tsv")) {
@@ -407,6 +409,10 @@ fn status(frame: u64) -> String {
         if let Some(t) = target(w) {
             let d = &unsafe { t.as_ref() }.modules.data;
             let _ = writeln!(s, "target_hp\t{}\ntarget_max_hp\t{}", d.hp, d.max_hp);
+            let dist = w.chr_inses_by_distance.iter().find(|e| e.chr_ins == t);
+            if let Some(e) = dist {
+                let _ = writeln!(s, "target_dist\t{:.1}", e.distance);
+            }
         }
     }
     s

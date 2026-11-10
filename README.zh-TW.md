@@ -106,7 +106,8 @@ cli/target/release/erh mousepress 0 3 # 在滑鼠裝置裡按住某個按鈕（0
 樣式找到它；樣式和呼叫方式取自 [Erd-Tools](https://github.com/Nordgaren/Erd-Tools)。row id 可以查 Erd-Tools 的 `BonfireWarpParam.txt`，例如 100001 是
 `[Stormveil Castle] Margit, the Fell Omen`（史東薇爾城的「惡兆妖鬼 瑪爾基特」賜福）。
 
-`press` 可用的鍵：`attack`、`strong`、`guard`、`skill`、`roll`、`jump`、`item`、`lockon`、`action`。
+`press` 可用的鍵：`attack`、`strong`、`guard`、`skill`、`roll`、`jump`、`item`、`lockon`、`action`，
+以及移動方向 `forward`、`back`、`left`、`right`（推到底）。
 按鍵寫進的是手把和鍵盤共用的虛擬輸入，所以會照玩家自己的按鍵設定。遊戲視窗有焦點時按鍵才有效，
 所以 `erh` 要從不會搶走焦點的地方執行，例如從另一台裝置 ssh 進來。
 
