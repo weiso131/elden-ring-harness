@@ -102,3 +102,13 @@ meant to end a phase through the damage path instead, not tried yet.
 Seen in the game: DLC Radahn enters his second phase as soon as `targethp 50` is
 set, with no hit needed. His grab kills on the second hit whatever `nodead` says,
 which `nohit` is for.
+
+`scripts/boss.sh` chains these to bring a defeated boss back in a phase, e.g. DLC
+Radahn in his second phase:
+
+```sh
+scripts/boss.sh m20_01_00_00 200100 50 20010800 20010801
+```
+
+It clears the boss's flags, warps to Roundtable Hold and back so the boss's map is
+reloaded, waits for the map, and sets the boss's HP.

@@ -90,3 +90,12 @@ cli/target/release/erh press skill 3 # 按住某個鍵 3 幀（預設 1 幀）
 
 實測：DLC 拉塔恩在 `targethp 50` 之後就直接進二階段，不用再打。他的抱摔技中兩次就會死，`nodead`
 擋不住，這時要用 `nohit`。
+
+`scripts/boss.sh` 把上面這些串起來，讓打過的 boss 以指定的階段重新出現，例如二階段的 DLC 拉塔恩：
+
+```sh
+scripts/boss.sh m20_01_00_00 200100 50 20010800 20010801
+```
+
+它會關掉 boss 的旗標、傳送到圓桌廳堂再傳送回來（讓 boss 所在的地圖重新載入）、等地圖載入完，
+再設定 boss 的 HP。
