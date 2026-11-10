@@ -1,4 +1,5 @@
 mod clock;
+mod control;
 mod tasks;
 
 use std::path::PathBuf;
@@ -26,6 +27,12 @@ pub unsafe extern "C" fn DllMain(_hmodule: usize, reason: u32) -> bool {
     let groups = std::env::var(GROUPS_ENV).unwrap_or_else(|_| DEFAULT_GROUPS.into());
     let groups: Vec<String> = groups.split(',').map(|g| g.trim().to_string()).collect();
     // The task runner is created by the main thread after DllMain returns.
+    let dir = out.clone();
+    std::thread::spawn(move || {
+        if let Err(e) = control::serve(&dir, Duration::from_millis(50)) {
+            let _ = std::fs::write(dir.join("control_error.txt"), format!("{e}\n"));
+        }
+    });
     std::thread::spawn(move || {
         if let Err(e) = tasks::record(&out, &groups, Duration::from_millis(100)) {
             let _ = std::fs::write(out.join("error.txt"), format!("{e}\n"));

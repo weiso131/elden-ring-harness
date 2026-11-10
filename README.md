@@ -60,3 +60,17 @@ in its group.
 Marking changes what it measures: a marker costs about 2 us, but groups the game
 seems to leave empty, such as the debug ones, took about 150 us per frame once
 marked. With `ERH_GROUPS=all` the game dropped from 60 to 30 fps.
+
+## Control
+
+While the game runs, `erh` (in `cli/`) talks to the mod through the run directory:
+
+```sh
+cargo build --release --manifest-path cli/Cargo.toml
+cli/target/release/erh status        # stage, HP, block and position of the player
+cli/target/release/erh ping
+```
+
+`erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
+is a file `cmd/<id>.cmd`; the mod runs it on the game's main thread at the start of
+the next frame and answers in `cmd/<id>.out`. `status.tsv` is rewritten every 50 ms.

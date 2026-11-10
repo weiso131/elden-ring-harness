@@ -52,3 +52,17 @@ me3 會讓遊戲保持離線，並改用存檔 `ERH0000.sl2`（第一次啟動�
 
 放標記本身會改變量到的結果：標記本身約 2µs，但遊戲看起來沒在用的 group（例如 debug 用的那些）
 放了標記之後，每幀各花約 150µs。`ERH_GROUPS=all` 時，遊戲從 60fps 掉到 30fps。
+
+## 控制
+
+遊戲執行中，可以用 `erh`（在 `cli/`）透過這次執行的輸出目錄跟模組溝通：
+
+```sh
+cargo build --release --manifest-path cli/Cargo.toml
+cli/target/release/erh status        # 目前階段、玩家的 HP、所在區塊與位置
+cli/target/release/erh ping
+```
+
+`erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案
+`cmd/<id>.cmd`，模組在下一幀開頭、在遊戲的主執行緒上執行，結果寫進 `cmd/<id>.out`。
+`status.tsv` 每 50ms 更新一次。
