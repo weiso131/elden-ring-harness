@@ -1,13 +1,25 @@
 # elden-ring-harness
 
-An ELDEN RING mod that exposes the game's internals to experiment scripts: time
-what the main thread spends each frame, warp to a fixed starting point, reset a
-boss, and replay a recorded route, so frame drops can be reproduced and explained
-from inside the game.
+A harness that lets an AI agent investigate ELDEN RING's performance on its own:
+put the game into a chosen situation, measure what happens inside it, and line that
+up with system-level tools to find why frames drop and propose fixes.
 
-Status: the first step, timing the game loop's task groups, builds but has not
-run in the game yet. Notes on what the mod builds on are in
-[docs/research.md](docs/research.md).
+It is built for being driven by an agent first: every control is a command-line
+call with plain text answers (`erh`), the game's state can be polled at any time
+(`erh status`), scripts run without a person at the keyboard (`launch.sh --title
+--run ...`), and every recording is a set of TSV files stamped with
+Linux's CLOCK_MONOTONIC_RAW (what Wine's QueryPerformanceCounter reads), so
+other tools' records can be lined up with them. A person can use the same commands, and
+the scripts ask for what they need when run without arguments.
+
+What the mod does inside the game:
+
+- times the stages of the game loop each frame (task groups), on the main thread
+- sets up situations: warp to a grace, revive a boss through its flags, put it in
+  its second phase, keep the player alive
+- presses game actions, so a run needs no hands
+
+Notes on what it builds on are in [docs/research.md](docs/research.md).
 
 ## Only for experiments
 
