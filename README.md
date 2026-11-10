@@ -36,7 +36,7 @@ Install [me3](https://github.com/garyttierney/me3), back up your save, then:
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # task groups to mark, or `all`
 ```
 
-`launch.sh` sets `ERH_OUT` and starts me3 from outside this directory: me3 picks its
+`launch.sh` turns on MangoHud unless `MANGOHUD=0` is given, sets `ERH_OUT`, and starts me3 from outside this directory: me3 picks its
 own Windows binaries from `./target/x86_64-pc-windows-msvc/release` first, where it
 would find this project's build instead and the game would not start.
 

@@ -30,7 +30,7 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # 要放標記的 task group，或 `all`
 ```
 
-`launch.sh` 會設好 `ERH_OUT`，並且在這個目錄以外啟動 me3：me3 會優先從
+`launch.sh` 會開 MangoHud（給 `MANGOHUD=0` 就不開）、設好 `ERH_OUT`，並且在這個目錄以外啟動 me3：me3 會優先從
 `./target/x86_64-pc-windows-msvc/release` 找它自己的 Windows 執行檔，在這裡會找到本專案的
 編譯結果，遊戲就開不起來。
 
