@@ -64,6 +64,7 @@ cli/target/release/erh ping
 cli/target/release/erh nodead on     # HP 最低停在 1，不會死；`off` 取消
 cli/target/release/erh warp 100001   # 用 BonfireWarpParam 的 row id 傳送到賜福
 cli/target/release/erh flag ID off   # 讀取（不給狀態）或設定事件旗標，例如 boss 的擊敗旗標
+cli/target/release/erh targethp 40   # 把鎖定中的敵人 HP 設成最大值的 40%
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案

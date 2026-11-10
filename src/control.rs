@@ -113,6 +113,23 @@ fn run(cmd: &str, frame: u64) -> String {
             let state = if flags.get_flag(id) { "on" } else { "off" };
             format!("ok flag {id}={state}\n")
         }
+        ["targethp", pct] => {
+            let Ok(pct) = pct.parse::<u32>() else {
+                return format!("error not a percentage: {pct}\n");
+            };
+            let Ok(w) = (unsafe { WorldChrMan::instance_mut() }) else {
+                return "error no WorldChrMan\n".into();
+            };
+            let Some(handle) = w.main_player.as_ref().map(|p| p.locked_on_enemy) else {
+                return "error no player\n".into();
+            };
+            let Some(target) = w.chr_ins_by_handle_mut(&handle) else {
+                return "error nothing locked on\n".into();
+            };
+            let data = &mut target.modules.data;
+            data.hp = (data.max_hp as i64 * pct.min(100) as i64 / 100) as i32;
+            format!("ok target hp={}/{}\n", data.hp, data.max_hp)
+        }
         ["nodead", on @ ("on" | "off")] => match unsafe { WorldChrManDbgFlags::instance_mut() } {
             Ok(f) => {
                 // The game keeps the player's HP at 1 instead of letting it reach 0.
@@ -144,5 +161,12 @@ fn status(frame: u64) -> String {
         "stage\tin_game\nhp\t{}\nmax_hp\t{}\nblock\t{}\npos\t{:.2} {:.2} {:.2}\n",
         data.hp, data.max_hp, p.current_block_id, pos.x, pos.y, pos.z
     );
+    let target = unsafe { WorldChrMan::instance() }
+        .ok()
+        .and_then(|w| w.chr_ins_by_handle(&p.locked_on_enemy));
+    if let Some(t) = target {
+        let d = &t.modules.data;
+        let _ = writeln!(s, "target_hp\t{}\ntarget_max_hp\t{}", d.hp, d.max_hp);
+    }
     s
 }
