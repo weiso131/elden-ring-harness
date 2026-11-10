@@ -1,5 +1,5 @@
 use eldenring::cs::{CSTaskGroupIndex, CSTaskImp, UserInputKey};
-use eldenring::dluid::DLUserInputDeviceImpl;
+use eldenring::dluid::{DLUserInputDeviceImpl, DLUserInputManagerImpl};
 use eldenring::fd4::{FD4PadManager, FD4TaskData, InputType};
 use fromsoftware_shared::{FromStatic, RecurringTaskHandle, SharedTaskImpExt, Subclass};
 use std::sync::Mutex;
@@ -116,6 +116,7 @@ pub fn install(task: &CSTaskImp) -> RecurringTaskHandle<FD4TaskData> {
                 }
             }
             let mut held = HELD.lock().unwrap();
+            focus(!held.is_empty());
             for (target, _) in held.iter() {
                 let _ = press(*target);
             }
@@ -125,6 +126,40 @@ pub fn install(task: &CSTaskImp) -> RecurringTaskHandle<FD4TaskData> {
             });
         },
         CSTaskGroupIndex::GameFlowStep,
+    )
+}
+
+/// The focus state the game had before presses started, while they last.
+static SAVED_FOCUS: Mutex<Option<bool>> = Mutex::new(None);
+
+/// The game stops taking input while its window is not focused, and a script
+/// runs from a terminal; while keys are held the game is told it has focus,
+/// and afterwards it gets back what it had, so typing in the terminal does not
+/// reach it once the presses are over.
+fn focus(pressing: bool) {
+    let Ok(man) = (unsafe { DLUserInputManagerImpl::instance_mut() }) else {
+        return;
+    };
+    let mut saved = SAVED_FOCUS.lock().unwrap();
+    match (pressing, *saved) {
+        (true, None) => {
+            *saved = Some(man.is_game_window_focused);
+            man.is_game_window_focused = true;
+        }
+        (true, Some(_)) => man.is_game_window_focused = true,
+        (false, Some(was)) => {
+            man.is_game_window_focused = was;
+            *saved = None;
+        }
+        (false, None) => {}
+    }
+}
+
+pub fn focused() -> Option<bool> {
+    Some(
+        unsafe { DLUserInputManagerImpl::instance() }
+            .ok()?
+            .is_game_window_focused,
     )
 }
 
