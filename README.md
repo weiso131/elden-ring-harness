@@ -95,7 +95,9 @@ Margit, the Fell Omen.
 
 `press` keys: `attack`, `strong`, `guard`, `skill`, `roll`, `jump`, `item`,
 `lockon`, `action`. A press goes into the same virtual input the controller and
-keyboard feed, so it follows the player's key bindings.
+keyboard feed, so it follows the player's key bindings. Presses only reach the game
+while its window has focus, so run `erh` from somewhere that does not take it, such
+as ssh from another device.
 
 `targethp 0` kills a two-phase boss outright instead of starting its second phase,
 and `targethp 1` starts nothing (seen with Malenia). The phase change most likely

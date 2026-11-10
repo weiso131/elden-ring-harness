@@ -85,7 +85,8 @@ cli/target/release/erh rawpress 252 3 # 按住某個原始輸入編號，例如�
 `[Stormveil Castle] Margit, the Fell Omen`（史東薇爾城的「惡兆妖鬼 瑪爾基特」賜福）。
 
 `press` 可用的鍵：`attack`、`strong`、`guard`、`skill`、`roll`、`jump`、`item`、`lockon`、`action`。
-按鍵寫進的是手把和鍵盤共用的虛擬輸入，所以會照玩家自己的按鍵設定。
+按鍵寫進的是手把和鍵盤共用的虛擬輸入，所以會照玩家自己的按鍵設定。遊戲視窗有焦點時按鍵才有效，
+所以 `erh` 要從不會搶走焦點的地方執行，例如從另一台裝置 ssh 進來。
 
 對兩階段的 boss 用 `targethp 0`，會直接把它打死，不會進二階段；`targethp 1` 則什麼都不會發生
 （瑪蓮妮亞實測如此）。換階段很可能是掛在「受到傷害」的流程上，而直接寫 HP 跳過了這個流程。

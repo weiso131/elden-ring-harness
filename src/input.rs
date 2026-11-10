@@ -1,5 +1,5 @@
 use eldenring::cs::{CSTaskGroupIndex, CSTaskImp, UserInputKey};
-use eldenring::dluid::{DLUserInputDeviceImpl, DLUserInputManagerImpl};
+use eldenring::dluid::DLUserInputDeviceImpl;
 use eldenring::fd4::{FD4PadManager, FD4TaskData, InputType};
 use fromsoftware_shared::{FromStatic, RecurringTaskHandle, SharedTaskImpExt, Subclass};
 use std::sync::Mutex;
@@ -116,7 +116,6 @@ pub fn install(task: &CSTaskImp) -> RecurringTaskHandle<FD4TaskData> {
                 }
             }
             let mut held = HELD.lock().unwrap();
-            focus(!held.is_empty());
             for (target, _) in held.iter() {
                 let _ = press(*target);
             }
@@ -129,51 +128,6 @@ pub fn install(task: &CSTaskImp) -> RecurringTaskHandle<FD4TaskData> {
     )
 }
 
-/// The focus state the game had before presses started, while they last.
-static SAVED_FOCUS: Mutex<Option<bool>> = Mutex::new(None);
-
-/// The game stops taking input while its window is not focused, and a script
-/// runs from a terminal; while keys are held the game is told it has focus,
-/// and afterwards it gets back what it had, so typing in the terminal does not
-/// reach it once the presses are over.
-fn focus(pressing: bool) {
-    let Ok(man) = (unsafe { DLUserInputManagerImpl::instance_mut() }) else {
-        return;
-    };
-    let mut saved = SAVED_FOCUS.lock().unwrap();
-    match (pressing, *saved) {
-        (true, None) => {
-            *saved = Some(man.is_game_window_focused);
-            man.is_game_window_focused = true;
-        }
-        (true, Some(_)) => man.is_game_window_focused = true,
-        (false, Some(was)) => {
-            man.is_game_window_focused = was;
-            *saved = None;
-        }
-        (false, None) => {}
-    }
-}
-
-/// Sets focus again at the start of the frame, before PadStep, in case the
-/// game recomputes it from the window every frame and overwrites the value
-/// set after PadStep.
-pub fn hold_focus() {
-    if SAVED_FOCUS.lock().unwrap().is_some()
-        && let Ok(man) = unsafe { DLUserInputManagerImpl::instance_mut() }
-    {
-        man.is_game_window_focused = true;
-    }
-}
-
-pub fn focused() -> Option<bool> {
-    Some(
-        unsafe { DLUserInputManagerImpl::instance() }
-            .ok()?
-            .is_game_window_focused,
-    )
-}
-
 /// The device the pads read. On the title screen there may be no in-game pad
 /// yet, so the menu pad's device is the fallback.
 fn device() -> Result<&'static mut DLUserInputDeviceImpl, &'static str> {
@@ -183,35 +137,6 @@ fn device() -> Result<&'static mut DLUserInputDeviceImpl, &'static str> {
         None => man.get_menu_viewer_pad_mut().ok_or("no pad")?.pad_device,
     };
     Ok(unsafe { pad_device.as_mut().virtual_multi_device.as_mut() }.superclass_mut())
-}
-
-/// The pad's mapped inputs for `key` that count when held down.
-fn mapped(key: UserInputKey) -> Result<Vec<i32>, &'static str> {
-    let man = unsafe { FD4PadManager::instance() }.map_err(|_| "no pad manager")?;
-    let pad = man.get_in_game_pad().ok_or("no in-game pad")?;
-    let group = unsafe { pad.input_type_group.as_ref() }
-        .find(&key)
-        .ok_or("key not mapped")?;
-    Ok(group
-        .iter()
-        .filter(|(_, t)| matches!(t, InputType::AreKeysDown))
-        .map(|(m, _)| m)
-        .collect())
-}
-
-/// The pad only reads a mapped input whose check reads (true, false); this
-/// shows both values for each of `key`'s inputs, to compare focused and not.
-pub fn checks(key: UserInputKey) -> Option<Vec<(bool, bool)>> {
-    let man = unsafe { FD4PadManager::instance() }.ok()?;
-    let pad = man.get_in_game_pad()?;
-    let map = unsafe { pad.input_code_check.as_ref() };
-    Some(
-        mapped(key)
-            .ok()?
-            .iter()
-            .filter_map(|m| map.find(m).map(|c| (c.state_1, c.state_2)))
-            .collect(),
-    )
 }
 
 /// Virtual input indices the in-game pad reads for `key` as held down.
@@ -242,38 +167,16 @@ fn read(key: UserInputKey) -> Result<(bool, bool), &'static str> {
 
 /// Sets the key in both the live input and the staged copy the device copies
 /// over it, since which of the two survives until the pad reads is not known.
-/// The pad is also made to poll: presses only took effect while the game
-/// window had focus, and `allow_polling` is the pad's own on/off switch.
+/// Presses only reach the game while its window has focus.
 fn press(target: Target) -> Result<(), &'static str> {
     let idx = match target {
         Target::Key(key) => indices(key)?,
         Target::Raw(i) => vec![i],
     };
-    let man = unsafe { FD4PadManager::instance_mut() }.map_err(|_| "no pad manager")?;
-    if let Some(pad) = man.get_in_game_pad_mut() {
-        pad.allow_polling = true;
-        // Per fromsoftware-rs's poll_digital_input, a mapped input whose
-        // check does not read (true, false) is skipped, whatever the device says.
-        if let Target::Key(key) = target {
-            let map = unsafe { pad.input_code_check.as_mut() };
-            for m in mapped(key)? {
-                if let Some(c) = map.find_mut(&m) {
-                    c.state_1 = true;
-                    c.state_2 = false;
-                }
-            }
-        }
-    }
     let d = device()?;
     for i in idx {
         d.virtual_input_data.set_digital(i, true);
         d.initial_virtual_input_data.set_digital(i, true);
     }
     Ok(())
-}
-
-/// Whether the in-game pad is polling input at all right now.
-pub fn polling() -> Option<bool> {
-    let man = unsafe { FD4PadManager::instance() }.ok()?;
-    Some(man.get_in_game_pad()?.allow_polling)
 }

@@ -41,7 +41,6 @@ pub fn serve(dir: &Path, interval: Duration) -> io::Result<()> {
     let _handle = task.run_recurring(
         move |_: &FD4TaskData| {
             frame += 1;
-            crate::input::hold_focus();
             let mut s = SHARED.lock().unwrap();
             while let Some((id, cmd)) = s.pending.pop_front() {
                 let out = run(&cmd, frame, &run_dir);
@@ -273,15 +272,6 @@ fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
 
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
-    if let Some(on) = crate::input::focused() {
-        let _ = writeln!(s, "focused\t{}", if on { "on" } else { "off" });
-    }
-    if let Some(c) = crate::input::checks(eldenring::cs::UserInputKey::Attack) {
-        let _ = writeln!(s, "attack_checks\t{c:?}");
-    }
-    if let Some(on) = crate::input::polling() {
-        let _ = writeln!(s, "pad_polling\t{}", if on { "on" } else { "off" });
-    }
     if let Some(sc) = crate::input::scan_status() {
         let _ = writeln!(s, "scan\t{sc}");
     }
