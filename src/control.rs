@@ -1,6 +1,6 @@
 use eldenring::cs::{
-    BonfireWarpParam, CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, ChrIns, SoloParamRepository,
-    UserInputKey, WorldChrMan, WorldChrManDbgFlags,
+    BonfireWarpParam, CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, ChrIns, GameMan,
+    SoloParamRepository, UserInputKey, WorldChrMan, WorldChrManDbgFlags,
 };
 use eldenring::fd4::FD4TaskData;
 use fromsoftware_shared::{FromStatic, SharedTaskImpExt};
@@ -142,6 +142,18 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             let data = &mut unsafe { t.as_mut() }.modules.data;
             data.hp = (data.max_hp as i64 * pct.min(100) as i64 / 100) as i32;
             format!("ok target hp={}/{}\n", data.hp, data.max_hp)
+        }
+        ["loadslot", slot] => {
+            let Ok(slot) = slot.parse::<i32>() else {
+                return format!("error not a slot: {slot}\n");
+            };
+            match unsafe { GameMan::instance_mut() } {
+                Ok(g) => {
+                    g.requested_save_slot_load_index = slot;
+                    format!("ok requested_save_slot_load_index={slot}\n")
+                }
+                Err(e) => format!("error no GameMan: {e:?}\n"),
+            }
         }
         ["lockhp", pct] => {
             let Ok(pct) = pct.parse::<u32>() else {
@@ -348,6 +360,15 @@ fn lock_hp_step() {
 
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
+    // What loading a save changes here, watched from the title screen while
+    // the player loads by hand, is what a scripted load has to reproduce.
+    if let Ok(g) = unsafe { GameMan::instance() } {
+        let _ = writeln!(
+            s,
+            "save_slot\t{}\nrequested_slot\t{}\nsave_state\t{}",
+            g.save_slot, g.requested_save_slot_load_index, g.save_state
+        );
+    }
     let lock_hp = LOCK_HP.lock().unwrap().result.clone();
     if !lock_hp.is_empty() {
         let _ = writeln!(s, "lockhp\t{lock_hp}");
