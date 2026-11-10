@@ -74,6 +74,7 @@ cli/target/release/erh warp 100001   # warp to a grace by BonfireWarpParam row i
 cli/target/release/erh flag ID off   # read (no state) or set an event flag, e.g. a boss's defeated flag
 cli/target/release/erh targethp 40   # set the target's HP to 40% of max: the locked-on enemy, else the
                                      # loaded character with the most max HP
+cli/target/release/erh nohit on      # enemy attacks do not hit the player
 cli/target/release/erh exterminate on # every hit by the player deals 9999999 damage
 cli/target/release/erh flagdump alive # write the ids of all set event flags to flags-alive.txt
 cli/target/release/erh graces       # list all graces with their unlock and cleared flags in graces.tsv
@@ -99,4 +100,5 @@ hangs off taking damage, which writing HP skips; `exterminate on` and one hit is
 meant to end a phase through the damage path instead, not tried yet.
 
 Seen in the game: DLC Radahn enters his second phase as soon as `targethp 50` is
-set, with no hit needed.
+set, with no hit needed. His grab kills on the second hit whatever `nodead` says,
+which `nohit` is for.

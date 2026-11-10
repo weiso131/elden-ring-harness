@@ -151,7 +151,10 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             Ok(n) => format!("ok flagdump {name} on={n}\n"),
             Err(e) => format!("error {e}\n"),
         },
-        [name @ ("nodead" | "exterminate"), on @ ("on" | "off")] => {
+        [
+            name @ ("nodead" | "exterminate" | "nohit"),
+            on @ ("on" | "off"),
+        ] => {
             match unsafe { WorldChrManDbgFlags::instance_mut() } {
                 Ok(f) => {
                     let on = *on == "on";
@@ -159,7 +162,9 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                         // The game keeps the player's HP at 1 instead of letting it reach 0.
                         "nodead" => f.player_no_dead = on,
                         // Every hit by the player deals 9999999 damage.
-                        _ => f.player_exterminate = on,
+                        "exterminate" => f.player_exterminate = on,
+                        // Enemy attacks do not hit the player.
+                        _ => f.all_no_hit = on,
                     }
                     format!("ok {name}={}\n", if on { "on" } else { "off" })
                 }

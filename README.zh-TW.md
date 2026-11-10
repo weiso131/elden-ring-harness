@@ -66,6 +66,7 @@ cli/target/release/erh warp 100001   # 用 BonfireWarpParam 的 row id 傳送到
 cli/target/release/erh flag ID off   # 讀取（不給狀態）或設定事件旗標，例如 boss 的擊敗旗標
 cli/target/release/erh targethp 40   # 把目標的 HP 設成最大值的 40%：鎖定中的敵人，沒鎖定時是
                                      # 已載入角色中最大 HP 最高的那個
+cli/target/release/erh nohit on      # 敵人的攻擊打不到玩家
 cli/target/release/erh exterminate on # 玩家每一擊都造成 9999999 傷害
 cli/target/release/erh flagdump alive # 把所有開著的事件旗標 id 寫到 flags-alive.txt
 cli/target/release/erh graces       # 把所有賜福和它們的解鎖、清除旗標寫到 graces.tsv
@@ -87,4 +88,5 @@ cli/target/release/erh press skill 3 # 按住某個鍵 3 幀（預設 1 幀）
 （瑪蓮妮亞實測如此）。換階段很可能是掛在「受到傷害」的流程上，而直接寫 HP 跳過了這個流程。
 `exterminate on` 再打一下，是想改走受傷害的流程來結束一個階段，還沒實測。
 
-實測：DLC 拉塔恩在 `targethp 50` 之後就直接進二階段，不用再打。
+實測：DLC 拉塔恩在 `targethp 50` 之後就直接進二階段，不用再打。他的抱摔技中兩次就會死，`nodead`
+擋不住，這時要用 `nohit`。
