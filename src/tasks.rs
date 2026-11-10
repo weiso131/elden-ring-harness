@@ -27,7 +27,10 @@ pub fn record(out: &Path, wanted: &[String], interval: Duration) -> io::Result<(
     let freq = clock::qpc_freq();
     fs::write(
         out.join("meta.tsv"),
-        format!("key\tvalue\npid\t{}\nqpc_freq\t{freq}\n", clock::linux_pid()),
+        format!(
+            "key\tvalue\npid\t{}\nqpc_freq\t{freq}\n",
+            clock::linux_pid()
+        ),
     )?;
 
     let mut groups = BufWriter::new(File::create(out.join("groups.tsv"))?);

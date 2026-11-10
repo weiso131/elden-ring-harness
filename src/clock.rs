@@ -25,7 +25,8 @@ thread_local! {
 /// /proc/thread-self is this thread. 0 if it cannot be read.
 pub fn linux_tid() -> u32 {
     TID.with(|t| {
-        *t.get().get_or_insert_with(|| first_field("Z:/proc/thread-self/stat"))
+        *t.get()
+            .get_or_insert_with(|| first_field("Z:/proc/thread-self/stat"))
     })
 }
 
