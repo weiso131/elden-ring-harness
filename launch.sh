@@ -1,10 +1,12 @@
 #!/bin/sh
-# Usage: [ERH_GROUPS=a,b] [MANGOHUD=0] ./launch.sh [--title] [--run COMMAND] [OUT_DIR]
-#   OUT_DIR defaults to ./out/<date-time>.
+# Usage: [ERH_GROUPS=a,b] [MANGOHUD=0] [ERH_LOG_ROOT=dir] ./launch.sh [--title] [--run COMMAND] [NAME]
+#   Recordings go to $ERH_LOG_ROOT/NAME (default ~/data/log/elden-ring-harness),
+#   kept off the disk the game streams from; commands and status go to
+#   ./out/NAME, where scripts and erh write. NAME defaults to the date and time.
 #   --title presses through the title screen into the last save
 #   (scripts/title.py); keep the mouse over the game window.
 #   COMMAND, e.g. "scripts/boss.sh radahn-dlc", runs from this directory once
-#   the mod answers, with ERH_DIR set to OUT_DIR, so a run needs no command
+#   the mod answers, with ERH_DIR set to ./out/NAME, so a run needs no command
 #   typed elsewhere: presses only reach a focused game.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
@@ -16,22 +18,34 @@ while [ $# -gt 0 ]; do
 	*) break ;;
 	esac
 done
-out=$(realpath -m "${1:-out/$(date +%Y%m%d-%H%M%S)}")
-mkdir -p "$out"
+name=${1:-$(date +%Y%m%d-%H%M%S)}
+root=$(realpath -m "${ERH_LOG_ROOT:-$HOME/data/log/elden-ring-harness}")
+out=$root/$name
+ctl=$here/out/$name
+mkdir -p "$out" "$ctl" "$root/.mount"
+ln -sfn "$out" "$ctl/recording"
+
+# The game runs in the Steam Linux Runtime, which only sees the filesystems
+# me3 mounts: those holding the profile's files. An empty package under the
+# log root makes me3 mount that disk too.
+profile=$ctl/erh.me3
+sed "s|^path = '../target/|path = '$here/target/|" "$here/profiles/erh.me3" >"$profile"
+printf "\n[[packages]]\npath = '%s'\n" "$root/.mount" >>"$profile"
+
 if [ -n "$title" ]; then
 	(
-		until [ -f "$out/status.tsv" ]; do sleep 1; done
-		cd "$here" && ERH_DIR="$out" scripts/title.py >"$out/title.log" 2>&1
+		until [ -f "$ctl/status.tsv" ]; do sleep 1; done
+		cd "$here" && ERH_DIR="$ctl" scripts/title.py >"$ctl/title.log" 2>&1
 	) &
 fi
 if [ -n "$run" ]; then
 	(
-		until [ -f "$out/status.tsv" ]; do sleep 1; done
-		cd "$here" && ERH_DIR="$out" sh -c "$run" >"$out/run.log" 2>&1
+		until [ -f "$ctl/status.tsv" ]; do sleep 1; done
+		cd "$here" && ERH_DIR="$ctl" sh -c "$run" >"$ctl/run.log" 2>&1
 	) &
 fi
 # me3 looks for its own Windows binaries in ./target/x86_64-pc-windows-msvc/release
 # before its install, so it must not start inside this cargo project.
 cd /
 # MangoHud's frame time graph shows a stall as it happens; MANGOHUD=0 turns it off.
-MANGOHUD=${MANGOHUD:-1} ERH_OUT="$out" exec me3 launch -p "$here/profiles/erh.me3"
+MANGOHUD=${MANGOHUD:-1} ERH_OUT="$out" ERH_CTL="$ctl" exec me3 launch -p "$profile"

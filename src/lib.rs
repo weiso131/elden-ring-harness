@@ -10,6 +10,10 @@ use std::time::Duration;
 /// Output directory, as a Linux path; the mod stays inert when it is unset, so
 /// a profile that loads the DLL by mistake changes nothing.
 const OUT_ENV: &str = "ERH_OUT";
+/// Directory for the command channel (cmd/, status.tsv, dumps), as a Linux
+/// path; ERH_OUT when unset. Kept apart so recordings can go to another disk
+/// while commands stay where the scripts driving the game can write.
+const CTL_ENV: &str = "ERH_CTL";
 /// Comma-separated task group names to mark, or `all`.
 const GROUPS_ENV: &str = "ERH_GROUPS";
 const DEFAULT_GROUPS: &str = "FrameBegin";
@@ -29,7 +33,9 @@ pub unsafe extern "C" fn DllMain(_hmodule: usize, reason: u32) -> bool {
     let groups = std::env::var(GROUPS_ENV).unwrap_or_else(|_| DEFAULT_GROUPS.into());
     let groups: Vec<String> = groups.split(',').map(|g| g.trim().to_string()).collect();
     // The task runner is created by the main thread after DllMain returns.
-    let dir = out.clone();
+    let dir = std::env::var_os(CTL_ENV)
+        .map(|p| wine_path(PathBuf::from(p)))
+        .unwrap_or_else(|| out.clone());
     std::thread::spawn(move || {
         if let Err(e) = control::serve(&dir, Duration::from_millis(50)) {
             let _ = std::fs::write(dir.join("control_error.txt"), format!("{e}\n"));

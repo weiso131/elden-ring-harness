@@ -26,7 +26,7 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 先安裝 [me3](https://github.com/garyttierney/me3)、備份存檔，然後：
 
 ```sh
-./launch.sh                                  # 寫到 out/<日期-時間>/
+./launch.sh                                  # 錄製資料寫到 ~/data/log/elden-ring-harness/<日期-時間>/
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # 要放標記的 task group，或 `all`
 ./launch.sh --run "scripts/boss.sh radahn-dlc" # 模組可以回應後，自動執行一個指令
 ./launch.sh --title                          # 自動按過標題畫面，載入最後一個存檔
@@ -39,7 +39,12 @@ ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # 要放標記的 task group，或 
 me3 會讓遊戲保持離線，並改用存檔 `ERH0000.sl2`（第一次啟動時從目前的存檔複製）。
 沒有設 `ERH_OUT` 時，模組什麼都不做。
 
-`out/` 裡的檔案：
+錄製資料寫到 `$ERH_LOG_ROOT/<名稱>`（預設 `~/data/log/elden-ring-harness`），跟遊戲讀取的硬碟分開；
+指令通道和狀態留在 `out/<名稱>`，裡面有一個 `recording` 連結指向錄製資料。launch.sh 產生的 me3
+profile 會在 log 目錄底下加一個空的 package，因為遊戲所在的 Steam Linux Runtime 容器只看得到
+me3 為 profile 裡的檔案掛載的檔案系統。
+
+錄製資料裡的檔案：
 
 | 檔案 | 欄位 | 內容 |
 |---|---|---|
