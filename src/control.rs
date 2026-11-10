@@ -3,6 +3,7 @@ use eldenring::cs::{
     SoloParamRepository, UserInputKey, WorldChrMan, WorldChrManDbgFlags,
 };
 use eldenring::fd4::FD4TaskData;
+use eldenring::rotation::Quaternion;
 use fromsoftware_shared::{FromStatic, SharedTaskImpExt};
 use std::collections::{BTreeSet, VecDeque};
 use std::fmt::Write as _;
@@ -155,10 +156,13 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 Err(e) => format!("error no GameMan: {e:?}\n"),
             }
         }
-        ["tp", x, y, z] => {
-            let (Ok(x), Ok(y), Ok(z)) = (x.parse::<f32>(), y.parse::<f32>(), z.parse::<f32>())
+        ["tp", rest @ ..] if rest.len() == 3 || rest.len() == 7 => {
+            let Ok(v) = rest
+                .iter()
+                .map(|a| a.parse::<f32>())
+                .collect::<Result<Vec<_>, _>>()
             else {
-                return "error usage: tp X Y Z (world position, as status shows it)\n".into();
+                return "error usage: tp X Y Z [Q0 Q1 Q2 Q3] (world position and facing, as status shows them)\n".into();
             };
             let Some(p) = (unsafe { WorldChrMan::instance_mut() })
                 .ok()
@@ -167,13 +171,19 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 return "error no player\n".into();
             };
             let physics = &mut p.chr_ins.modules.physics;
-            physics.position.0 = x;
-            physics.position.1 = y;
-            physics.position.2 = z;
+            physics.position.0 = v[0];
+            physics.position.1 = v[1];
+            physics.position.2 = v[2];
+            // Facing matters for what comes next: an action button such as a
+            // fog gate's only takes the player within an angle of it.
+            if let [_, _, _, a, b, c, d] = v[..] {
+                physics.orientation = Quaternion(a, b, c, d);
+                physics.interpolated_orientation = Quaternion(a, b, c, d);
+            }
             // Asks the character controller to take the new position too, or
             // it may keep its own and move the player back.
             physics.chr_proxy_pos_update_requested = true;
-            format!("ok tp {x:.2} {y:.2} {z:.2}\n")
+            format!("ok tp {}\n", rest.join(" "))
         }
         ["lockhp", pct] => {
             let Ok(pct) = pct.parse::<u32>() else {
@@ -416,10 +426,23 @@ fn status(frame: u64) -> String {
     let data = &p.chr_ins.modules.data;
     let pos = &p.block_position;
     let world = &p.chr_ins.modules.physics.position;
+    let q = &p.chr_ins.modules.physics.orientation;
     let _ = write!(
         s,
-        "stage\tin_game\nhp\t{}\nmax_hp\t{}\nblock\t{}\npos\t{:.2} {:.2} {:.2}\nworld\t{:.2} {:.2} {:.2}\n",
-        data.hp, data.max_hp, p.current_block_id, pos.x, pos.y, pos.z, world.0, world.1, world.2
+        "stage\tin_game\nhp\t{}\nmax_hp\t{}\nblock\t{}\npos\t{:.2} {:.2} {:.2}\nworld\t{:.2} {:.2} {:.2}\nfacing\t{:.4} {:.4} {:.4} {:.4}\n",
+        data.hp,
+        data.max_hp,
+        p.current_block_id,
+        pos.x,
+        pos.y,
+        pos.z,
+        world.0,
+        world.1,
+        world.2,
+        q.0,
+        q.1,
+        q.2,
+        q.3
     );
     if let Ok(w) = unsafe { WorldChrMan::instance() } {
         // Characters the game has loaded around the player; a boss's arena
