@@ -3,9 +3,43 @@
 法環的模組，把遊戲內部接出來給實驗腳本用：記錄主執行緒每一幀把時間花在哪、傳送到固定的
 起點、重置 boss、重播錄好的路線，讓掉幀能重現，並從遊戲內部找出原因。
 
-狀態：研究階段，還沒有程式碼。見 [docs/research.md](docs/research.md)。
+狀態：第一步（記錄主迴圈每個 task group 的時間）可以編譯，還沒在遊戲裡跑過。
+模組依靠的東西整理在 [docs/research.md](docs/research.md)。
 
 ## 只在實驗時使用
 
 平常玩不會載入這個模組。從 Steam 啟動會走 `start_protected_game.exe`，EAC 開著，遊戲維持原狀。
 做實驗時改用 me3 模組載入器和專用的 profile 啟動，離線、使用另一個存檔。
+
+## 建置
+
+DLL 的目標平台是 Windows，在 Linux 上用 [cargo-xwin](https://github.com/rust-cross/cargo-xwin) 編譯：
+
+```sh
+rustup target add x86_64-pc-windows-msvc
+cargo install --locked cargo-xwin
+cargo xwin build --release --target x86_64-pc-windows-msvc
+```
+
+## 執行
+
+先安裝 [me3](https://github.com/garyttierney/me3)、備份存檔，然後：
+
+```sh
+ERH_OUT=$PWD/out me3 launch -p profiles/erh.me3
+```
+
+me3 會讓遊戲保持離線，並改用存檔 `ERH0000.sl2`（第一次啟動時從目前的存檔複製）。
+沒有設 `ERH_OUT` 時，模組什麼都不做。
+
+`out/` 裡的檔案：
+
+| 檔案 | 欄位 | 內容 |
+|---|---|---|
+| `meta.tsv` | `key value` | 遊戲的 Linux pid、QueryPerformanceCounter 的頻率 |
+| `groups.tsv` | `group name` | 每個 task group 的編號和名字，順序就是遊戲執行的順序 |
+| `tasks.tsv` | `t_ns tid group` | 標記 task 每執行一次一列：QueryPerformanceCounter 換成 ns、Linux tid、task group |
+
+模組在 169 個 task group 裡各註冊一個標記 task。每一幀的 group 都照固定順序執行，所以兩個相鄰
+標記之間的時間差，大約就是一個 group 花的時間。同一個 group 裡的 task 順序不固定，所以標記可能
+落在 group 裡的任何位置。

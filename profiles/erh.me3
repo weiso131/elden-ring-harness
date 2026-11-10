@@ -1,0 +1,10 @@
+profileVersion = "v1"
+# me3 copies the current save to this name the first time, then the
+# normal ER0000.sl2 is left alone.
+savefile = "ERH0000.sl2"
+
+[[supports]]
+game = "eldenring"
+
+[[natives]]
+path = '../target/x86_64-pc-windows-msvc/release/erh.dll'

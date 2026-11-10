@@ -1,0 +1,21 @@
+[package]
+name = "elden-ring-harness"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "erh"
+crate-type = ["cdylib"]
+
+[dependencies]
+# Pinned: the bindings carry hard-coded addresses for one game version (2.7.2.0).
+eldenring = { git = "https://github.com/vswarte/fromsoftware-rs", rev = "57023153d786c4b13fe95d9170e6dcd9d35093ea" }
+fromsoftware-shared = { git = "https://github.com/vswarte/fromsoftware-rs", rev = "57023153d786c4b13fe95d9170e6dcd9d35093ea" }
+
+[dependencies.windows]
+version = "0.61"
+features = ["Win32_System_Performance"]
+
+[profile.release]
+panic = "abort"
+lto = true
