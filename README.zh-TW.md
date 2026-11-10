@@ -26,7 +26,8 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 先安裝 [me3](https://github.com/garyttierney/me3)、備份存檔，然後：
 
 ```sh
-./launch.sh out
+./launch.sh                                  # 寫到 out/<日期-時間>/
+ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # 要放標記的 task group，或 `all`
 ```
 
 `launch.sh` 會設好 `ERH_OUT`，並且在這個目錄以外啟動 me3：me3 會優先從
@@ -44,6 +45,10 @@ me3 會讓遊戲保持離線，並改用存檔 `ERH0000.sl2`（第一次啟動�
 | `groups.tsv` | `group name` | 每個 task group 的編號和名字，順序就是遊戲執行的順序 |
 | `tasks.tsv` | `t_ns tid group` | 標記 task 每執行一次一列：QueryPerformanceCounter 換成 ns、Linux tid、task group |
 
-模組在 169 個 task group 裡各註冊一個標記 task。每一幀的 group 都照固定順序執行，所以兩個相鄰
-標記之間的時間差，大約就是一個 group 花的時間。同一個 group 裡的 task 順序不固定，所以標記可能
-落在 group 裡的任何位置。
+模組在 `ERH_GROUPS` 列出的每個 task group 裡註冊一個標記 task（預設只有 `FrameBegin`，
+名字可以在 `groups.tsv` 查）。每一幀的 group 都照固定順序執行，所以兩個相鄰標記之間的時間差，
+大約就是中間那些 group 花的時間。同一個 group 裡的 task 順序不固定，所以標記可能落在 group
+裡的任何位置。
+
+放標記本身會改變量到的結果：標記本身約 2µs，但遊戲看起來沒在用的 group（例如 debug 用的那些）
+放了標記之後，每幀各花約 150µs。`ERH_GROUPS=all` 時，遊戲從 60fps 掉到 30fps。

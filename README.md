@@ -32,7 +32,8 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 Install [me3](https://github.com/garyttierney/me3), back up your save, then:
 
 ```sh
-./launch.sh out
+./launch.sh                                  # writes to out/<date-time>/
+ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # task groups to mark, or `all`
 ```
 
 `launch.sh` sets `ERH_OUT` and starts me3 from outside this directory: me3 picks its
@@ -50,7 +51,12 @@ the current one on first launch. The mod does nothing unless `ERH_OUT` is set.
 | `groups.tsv` | `group name` | index and name of each task group, in the order the game runs them |
 | `tasks.tsv` | `t_ns tid group` | one row each time a marker task ran: QueryPerformanceCounter in ns, Linux tid, task group |
 
-The mod registers one marker task in each of the 169 task groups. Groups run in a
-fixed order every frame, so the gap between two consecutive markers is roughly the
-time of one group; tasks inside a group have no fixed order, so a marker can sit
-anywhere in its group.
+The mod registers a marker task in each task group named in `ERH_GROUPS` (default
+`FrameBegin`; the names are in `groups.tsv`). Groups run in a fixed order every
+frame, so the gap between two consecutive markers is roughly the time of the groups
+in between; tasks inside a group have no fixed order, so a marker can sit anywhere
+in its group.
+
+Marking changes what it measures: a marker costs about 2 us, but groups the game
+seems to leave empty, such as the debug ones, took about 150 us per frame once
+marked. With `ERH_GROUPS=all` the game dropped from 60 to 30 fps.
