@@ -1,0 +1,13 @@
+# Copy to `config` and edit; launch.sh reads it. `config` is not tracked, so
+# each machine keeps its own. Variables already set in the environment win.
+
+# Where recordings go. Best on a disk other than the game's, so writing them
+# does not compete with the game's own reads. Default: ./out, next to the
+# command channel.
+#ERH_LOG_ROOT=$HOME/data/log/elden-ring-harness
+
+# Task groups to mark each frame (names in groups.tsv), or `all`.
+#ERH_GROUPS=FrameBegin
+
+# 0 to start without the MangoHud overlay.
+#MANGOHUD=1

@@ -1,8 +1,9 @@
 #!/bin/sh
 # Usage: [ERH_GROUPS=a,b] [MANGOHUD=0] [ERH_LOG_ROOT=dir] ./launch.sh [--title] [--run COMMAND] [NAME]
-#   Recordings go to $ERH_LOG_ROOT/NAME (default ~/data/log/elden-ring-harness),
-#   kept off the disk the game streams from; commands and status go to
-#   ./out/NAME, where scripts and erh write. NAME defaults to the date and time.
+#   Settings also come from ./config (see config.example); the environment wins.
+#   Recordings go to $ERH_LOG_ROOT/NAME (default ./out/NAME); commands and
+#   status go to ./out/NAME, where scripts and erh write. NAME defaults to the
+#   date and time.
 #   --title presses through the title screen into the last save
 #   (scripts/title.py); keep the mouse over the game window.
 #   COMMAND, e.g. "scripts/boss.sh radahn-dlc", runs from this directory once
@@ -10,6 +11,15 @@
 #   typed elsewhere: presses only reach a focused game.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
+if [ -f "$here/config" ]; then
+	# Only fill in what the environment does not already set.
+	env_root=${ERH_LOG_ROOT-} env_groups=${ERH_GROUPS-} env_hud=${MANGOHUD-}
+	. "$here/config"
+	ERH_LOG_ROOT=${env_root:-${ERH_LOG_ROOT-}}
+	ERH_GROUPS=${env_groups:-${ERH_GROUPS-}}
+	MANGOHUD=${env_hud:-${MANGOHUD-}}
+fi
+[ -n "${ERH_GROUPS-}" ] && export ERH_GROUPS
 run= title=
 while [ $# -gt 0 ]; do
 	case $1 in
@@ -19,11 +29,11 @@ while [ $# -gt 0 ]; do
 	esac
 done
 name=${1:-$(date +%Y%m%d-%H%M%S)}
-root=$(realpath -m "${ERH_LOG_ROOT:-$HOME/data/log/elden-ring-harness}")
+root=$(realpath -m "${ERH_LOG_ROOT:-$here/out}")
 out=$root/$name
 ctl=$here/out/$name
 mkdir -p "$out" "$ctl" "$root/.mount"
-ln -sfn "$out" "$ctl/recording"
+[ "$out" = "$ctl" ] || ln -sfn "$out" "$ctl/recording"
 
 # The game runs in the Steam Linux Runtime, which only sees the filesystems
 # me3 mounts: those holding the profile's files. An empty package under the

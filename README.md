@@ -32,7 +32,7 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 Install [me3](https://github.com/garyttierney/me3), back up your save, then:
 
 ```sh
-./launch.sh                                  # recordings in ~/data/log/elden-ring-harness/<date-time>/
+./launch.sh                                  # recordings in $ERH_LOG_ROOT/<date-time>/
 ERH_GROUPS=FrameBegin,DrawStep ./launch.sh   # task groups to mark, or `all`
 ./launch.sh --run "scripts/boss.sh radahn-dlc" # run a command once the mod answers
 ./launch.sh --title                          # press through the title screen into the last save
@@ -45,8 +45,10 @@ would find this project's build instead and the game would not start.
 me3 keeps the game offline and switches to the save `ERH0000.sl2`, copied from
 the current one on first launch. The mod does nothing unless `ERH_OUT` is set.
 
-Recordings go to `$ERH_LOG_ROOT/<name>` (default `~/data/log/elden-ring-harness`),
-off the disk the game streams from; the command channel and status stay in
+Settings for this machine go in `config` (copy `config.example`; the environment
+overrides it). Recordings go to `$ERH_LOG_ROOT/<name>` (default `out/<name>`); put
+that on a disk other than the game's so writing them does not compete with the
+game's reads. The command channel and status stay in
 `out/<name>`, which links to the recording as `recording`. launch.sh adds an empty
 package under the log root to the me3 profile it generates, because the game's
 Steam Linux Runtime container only sees the filesystems me3 mounts for the
