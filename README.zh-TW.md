@@ -61,6 +61,7 @@ me3 會讓遊戲保持離線，並改用存檔 `ERH0000.sl2`（第一次啟動�
 cargo build --release --manifest-path cli/Cargo.toml
 cli/target/release/erh status        # 目前階段、玩家的 HP、所在區塊與位置
 cli/target/release/erh ping
+cli/target/release/erh nodead on     # HP 最低停在 1，不會死；`off` 取消
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案

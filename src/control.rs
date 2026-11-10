@@ -1,4 +1,4 @@
-use eldenring::cs::{CSTaskGroupIndex, CSTaskImp, WorldChrMan};
+use eldenring::cs::{CSTaskGroupIndex, CSTaskImp, WorldChrMan, WorldChrManDbgFlags};
 use eldenring::fd4::FD4TaskData;
 use fromsoftware_shared::{FromStatic, SharedTaskImpExt};
 use std::collections::{BTreeSet, VecDeque};
@@ -87,12 +87,23 @@ fn run(cmd: &str, frame: u64) -> String {
     let args: Vec<&str> = cmd.split_whitespace().collect();
     match args.as_slice() {
         ["ping"] => format!("ok frame={frame}\n"),
+        ["nodead", on @ ("on" | "off")] => match unsafe { WorldChrManDbgFlags::instance_mut() } {
+            Ok(f) => {
+                // The game keeps the player's HP at 1 instead of letting it reach 0.
+                f.player_no_dead = *on == "on";
+                format!("ok nodead={on}\n")
+            }
+            Err(e) => format!("error debug flags not found: {e:?}\n"),
+        },
         _ => format!("error unknown command: {cmd}\n"),
     }
 }
 
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
+    if let Ok(f) = unsafe { WorldChrManDbgFlags::instance() } {
+        let _ = writeln!(s, "nodead\t{}", if f.player_no_dead { "on" } else { "off" });
+    }
     let player = unsafe { WorldChrMan::instance() }
         .ok()
         .and_then(|w| w.main_player.as_ref());

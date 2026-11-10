@@ -69,6 +69,7 @@ While the game runs, `erh` (in `cli/`) talks to the mod through the run director
 cargo build --release --manifest-path cli/Cargo.toml
 cli/target/release/erh status        # stage, HP, block and position of the player
 cli/target/release/erh ping
+cli/target/release/erh nodead on     # HP stops at 1 instead of 0; `off` to undo
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
