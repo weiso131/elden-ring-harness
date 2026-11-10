@@ -66,6 +66,7 @@ cli/target/release/erh warp 100001   # 用 BonfireWarpParam 的 row id 傳送到
 cli/target/release/erh flag ID off   # 讀取（不給狀態）或設定事件旗標，例如 boss 的擊敗旗標
 cli/target/release/erh targethp 40   # 把鎖定中的敵人 HP 設成最大值的 40%
 cli/target/release/erh exterminate on # 玩家每一擊都造成 9999999 傷害
+cli/target/release/erh flagdump alive # 把所有開著的事件旗標 id 寫到 flags-alive.txt
 cli/target/release/erh press skill 3 # 按住某個鍵 3 幀（預設 1 幀）
 ```
 

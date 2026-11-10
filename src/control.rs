@@ -33,14 +33,15 @@ pub fn serve(dir: &Path, interval: Duration) -> io::Result<()> {
     let task = CSTaskImp::wait_for_instance(Duration::MAX)
         .map_err(|e| io::Error::other(format!("CSTaskImp not found: {e:?}")))?;
     let mut frame = 0u64;
-    // FrameBegin always has the game's own tasks, so it adds no group of its own.
+    let run_dir = dir.to_path_buf();
     let _input = crate::input::install(task);
+    // FrameBegin always has the game's own tasks, so it adds no group of its own.
     let _handle = task.run_recurring(
         move |_: &FD4TaskData| {
             frame += 1;
             let mut s = SHARED.lock().unwrap();
             while let Some((id, cmd)) = s.pending.pop_front() {
-                let out = run(&cmd, frame);
+                let out = run(&cmd, frame, &run_dir);
                 s.done.push((id, out));
             }
             s.status = status(frame);
@@ -86,7 +87,7 @@ fn write_atomic(path: &Path, text: &str) -> io::Result<()> {
     fs::rename(tmp, path)
 }
 
-fn run(cmd: &str, frame: u64) -> String {
+fn run(cmd: &str, frame: u64, dir: &Path) -> String {
     let args: Vec<&str> = cmd.split_whitespace().collect();
     match args.as_slice() {
         ["ping"] => format!("ok frame={frame}\n"),
@@ -146,6 +147,10 @@ fn run(cmd: &str, frame: u64) -> String {
             crate::input::hold(key, frames);
             format!("ok press {name} frames={frames}\n")
         }
+        ["flagdump", name] => match dump_flags(&dir.join(format!("flags-{name}.txt"))) {
+            Ok(n) => format!("ok flagdump {name} on={n}\n"),
+            Err(e) => format!("error {e}\n"),
+        },
         [name @ ("nodead" | "exterminate"), on @ ("on" | "off")] => {
             match unsafe { WorldChrManDbgFlags::instance_mut() } {
                 Ok(f) => {
@@ -163,6 +168,29 @@ fn run(cmd: &str, frame: u64) -> String {
         }
         _ => format!("error unknown command: {cmd}\n"),
     }
+}
+
+/// Writes every flag that is on, one id per line, so two dumps can be diffed to
+/// find the flags an event sets. Reads each bit through get_flag on the main
+/// thread, so it stalls the game: meant for setting up experiments, not for a
+/// measured run.
+fn dump_flags(path: &Path) -> Result<usize, String> {
+    let man = unsafe { CSEventFlagMan::instance() }.map_err(|e| format!("{e:?}"))?;
+    let flags = &man.virtual_memory_flag;
+    let divisor = flags.event_flag_divisor;
+    let mut out = String::new();
+    let mut n = 0;
+    for entry in flags.flag_block_descriptors.iter() {
+        let base = entry.first * divisor;
+        for id in base..base + divisor {
+            if flags.get_flag(id) {
+                let _ = writeln!(out, "{id}");
+                n += 1;
+            }
+        }
+    }
+    fs::write(path, out).map_err(|e| e.to_string())?;
+    Ok(n)
 }
 
 fn status(frame: u64) -> String {
