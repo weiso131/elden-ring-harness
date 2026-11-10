@@ -1,4 +1,6 @@
-use eldenring::cs::{CSTaskGroupIndex, CSTaskImp, WorldChrMan, WorldChrManDbgFlags};
+use eldenring::cs::{
+    CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, WorldChrMan, WorldChrManDbgFlags,
+};
 use eldenring::fd4::FD4TaskData;
 use fromsoftware_shared::{FromStatic, SharedTaskImpExt};
 use std::collections::{BTreeSet, VecDeque};
@@ -94,6 +96,23 @@ fn run(cmd: &str, frame: u64) -> String {
             },
             Err(_) => format!("error not a grace id: {id}\n"),
         },
+        ["flag", id, rest @ ..] => {
+            let Ok(id) = id.parse::<u32>() else {
+                return format!("error not a flag id: {id}\n");
+            };
+            let Ok(man) = (unsafe { CSEventFlagMan::instance_mut() }) else {
+                return "error event flags not ready\n".into();
+            };
+            let flags = &mut man.virtual_memory_flag;
+            match rest {
+                [] => {}
+                ["on"] => flags.set_flag(id, true),
+                ["off"] => flags.set_flag(id, false),
+                _ => return "error usage: flag ID [on|off]\n".into(),
+            }
+            let state = if flags.get_flag(id) { "on" } else { "off" };
+            format!("ok flag {id}={state}\n")
+        }
         ["nodead", on @ ("on" | "off")] => match unsafe { WorldChrManDbgFlags::instance_mut() } {
             Ok(f) => {
                 // The game keeps the player's HP at 1 instead of letting it reach 0.

@@ -71,6 +71,7 @@ cli/target/release/erh status        # stage, HP, block and position of the play
 cli/target/release/erh ping
 cli/target/release/erh nodead on     # HP stops at 1 instead of 0; `off` to undo
 cli/target/release/erh warp 100001   # warp to a grace by BonfireWarpParam row id
+cli/target/release/erh flag ID off   # read (no state) or set an event flag, e.g. a boss's defeated flag
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
