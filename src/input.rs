@@ -185,6 +185,35 @@ fn device() -> Result<&'static mut DLUserInputDeviceImpl, &'static str> {
     Ok(unsafe { pad_device.as_mut().virtual_multi_device.as_mut() }.superclass_mut())
 }
 
+/// The pad's mapped inputs for `key` that count when held down.
+fn mapped(key: UserInputKey) -> Result<Vec<i32>, &'static str> {
+    let man = unsafe { FD4PadManager::instance() }.map_err(|_| "no pad manager")?;
+    let pad = man.get_in_game_pad().ok_or("no in-game pad")?;
+    let group = unsafe { pad.input_type_group.as_ref() }
+        .find(&key)
+        .ok_or("key not mapped")?;
+    Ok(group
+        .iter()
+        .filter(|(_, t)| matches!(t, InputType::AreKeysDown))
+        .map(|(m, _)| m)
+        .collect())
+}
+
+/// The pad only reads a mapped input whose check reads (true, false); this
+/// shows both values for each of `key`'s inputs, to compare focused and not.
+pub fn checks(key: UserInputKey) -> Option<Vec<(bool, bool)>> {
+    let man = unsafe { FD4PadManager::instance() }.ok()?;
+    let pad = man.get_in_game_pad()?;
+    let map = unsafe { pad.input_code_check.as_ref() };
+    Some(
+        mapped(key)
+            .ok()?
+            .iter()
+            .filter_map(|m| map.find(m).map(|c| (c.state_1, c.state_2)))
+            .collect(),
+    )
+}
+
 /// Virtual input indices the in-game pad reads for `key` as held down.
 fn indices(key: UserInputKey) -> Result<Vec<usize>, &'static str> {
     let man = unsafe { FD4PadManager::instance() }.map_err(|_| "no pad manager")?;
@@ -223,6 +252,17 @@ fn press(target: Target) -> Result<(), &'static str> {
     let man = unsafe { FD4PadManager::instance_mut() }.map_err(|_| "no pad manager")?;
     if let Some(pad) = man.get_in_game_pad_mut() {
         pad.allow_polling = true;
+        // Per fromsoftware-rs's poll_digital_input, a mapped input whose
+        // check does not read (true, false) is skipped, whatever the device says.
+        if let Target::Key(key) = target {
+            let map = unsafe { pad.input_code_check.as_mut() };
+            for m in mapped(key)? {
+                if let Some(c) = map.find_mut(&m) {
+                    c.state_1 = true;
+                    c.state_2 = false;
+                }
+            }
+        }
     }
     let d = device()?;
     for i in idx {

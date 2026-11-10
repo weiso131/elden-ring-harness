@@ -276,6 +276,9 @@ fn status(frame: u64) -> String {
     if let Some(on) = crate::input::focused() {
         let _ = writeln!(s, "focused\t{}", if on { "on" } else { "off" });
     }
+    if let Some(c) = crate::input::checks(eldenring::cs::UserInputKey::Attack) {
+        let _ = writeln!(s, "attack_checks\t{c:?}");
+    }
     if let Some(on) = crate::input::polling() {
         let _ = writeln!(s, "pad_polling\t{}", if on { "on" } else { "off" });
     }
