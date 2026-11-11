@@ -46,9 +46,8 @@ pub fn equip(id: u32, slot: usize) -> Result<String, String> {
     let w = unsafe { WorldChrMan::instance_mut() }.map_err(|_| "no WorldChrMan")?;
     let p = w.main_player.as_mut().ok_or("no player")?;
     let eq = &mut unsafe { p.player_game_data.as_mut() }.equipment;
-    let (idx, handle) = eq
-        .equip_inventory_data
-        .items_data
+    let items = &eq.equip_inventory_data.items_data;
+    let (i, handle) = items
         .normal_entries()
         .iter()
         .enumerate()
@@ -57,6 +56,9 @@ pub fn equip(id: u32, slot: usize) -> Result<String, String> {
             (e.item_id.into_inner() == id).then_some((i, e.gaitem_handle))
         })
         .ok_or_else(|| format!("no item 0x{id:08x} in the inventory"))?;
+    // The menu numbers items across both lists, key items first: a weapon
+    // equipped from it read as its normal-list position plus this.
+    let idx = i + items.key_items_capacity as usize;
     let before = (
         eq.equipment_item_idx_list[slot],
         raw(eq.chr_asm.gaitem_handles[slot]),
@@ -75,3 +77,4 @@ pub fn equip(id: u32, slot: usize) -> Result<String, String> {
         before.2
     ))
 }
+
