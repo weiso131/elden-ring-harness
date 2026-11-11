@@ -90,9 +90,9 @@ pub fn face(w: &mut WorldChrMan, t: NonNull<ChrIns>) -> Result<f32, &'static str
     let tp = &unsafe { t.as_ref() }.modules.physics.position;
     let physics = &mut p.chr_ins.modules.physics;
     let (dx, dz) = (tp.0 - physics.position.0, tp.2 - physics.position.2);
-    // Assumes a character's forward is its local +Z, yaw turning it towards
-    // +X; not checked in the game yet.
-    let yaw = dx.atan2(dz);
+    // A character looks down its local -Z: Godrick's fog gate, facing him,
+    // read as q = (0, -0.7349, 0, 0.6782) in status.
+    let yaw = (-dx).atan2(-dz);
     let q = Quaternion(0.0, (yaw / 2.0).sin(), 0.0, (yaw / 2.0).cos());
     physics.orientation = q;
     physics.interpolated_orientation = q;
