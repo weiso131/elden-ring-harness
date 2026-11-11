@@ -38,6 +38,7 @@ pub fn serve(dir: &Path, interval: Duration) -> io::Result<()> {
     let mut frame = 0u64;
     let run_dir = dir.to_path_buf();
     let _input = crate::input::install(task);
+    let _items = crate::item::install(task);
     // FrameBegin always has the game's own tasks, so it adds no group of its own.
     let _handle = task.run_recurring(
         move |_: &FD4TaskData| {
@@ -70,9 +71,31 @@ pub fn serve(dir: &Path, interval: Duration) -> io::Result<()> {
         }
         // Ids sort in the order the CLI made them.
         new.sort();
+        // As eldenring-practice-tool calls the item spawn: off the game's
+        // main loop, for comparing against give's results.
+        let mut answered = Vec::new();
+        new.retain(|(id, cmd)| {
+            let Some(rest) = cmd.strip_prefix("give-thread ") else {
+                return true;
+            };
+            let mut a = rest.split_whitespace().map(|v| {
+                v.strip_prefix("0x")
+                    .map_or_else(|| v.parse(), |h| u32::from_str_radix(h, 16))
+            });
+            let out = match (a.next(), a.next().unwrap_or(Ok(1))) {
+                (Some(Ok(item)), Ok(qty)) => match crate::item::give(item, qty) {
+                    Ok(info) => format!("ok give-thread 0x{item:08x} x{qty} {info}\n"),
+                    Err(e) => format!("error {e}\n"),
+                },
+                _ => "error usage: give-thread ID [QTY]\n".into(),
+            };
+            answered.push((id.clone(), out));
+            false
+        });
         let (done, status) = {
             let mut s = SHARED.lock().unwrap();
             s.pending.extend(new);
+            s.done.extend(answered);
             (std::mem::take(&mut s.done), s.status.clone())
         };
         for (id, out) in done {
@@ -260,7 +283,7 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             crate::input::release();
             "ok stopped walks, lock-ons and held keys\n".into()
         }
-        ["give", id, rest @ ..] if rest.len() <= 1 => {
+        [kind @ ("give" | "give-late"), id, rest @ ..] if rest.len() <= 1 => {
             let id = id
                 .strip_prefix("0x")
                 .map_or_else(|| id.parse(), |h| u32::from_str_radix(h, 16));
@@ -275,6 +298,10 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 },
                 _ => unreachable!(),
             };
+            if *kind == "give-late" {
+                crate::item::give_late(id, qty);
+                return format!("ok give-late 0x{id:08x} x{qty}; see give_late in status\n");
+            }
             match crate::item::give(id, qty) {
                 Ok(info) => format!("ok give 0x{id:08x} x{qty} dropped at the player's feet; press action to pick it up {info}\n"),
                 Err(e) => format!("error {e}\n"),
@@ -510,6 +537,10 @@ fn status(frame: u64) -> String {
         );
     }
     crate::drive::status(&mut s);
+    let late = crate::item::late_status();
+    if !late.is_empty() {
+        let _ = writeln!(s, "give_late\t{late}");
+    }
     if let Some(sc) = crate::input::scan_status() {
         let _ = writeln!(s, "scan\t{sc}");
     }

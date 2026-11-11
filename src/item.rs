@@ -2,7 +2,10 @@ use fromsoftware_shared::program::Program;
 use pelite::pattern;
 use pelite::pe64::Pe;
 use std::ffi::c_void;
-use std::sync::LazyLock;
+use eldenring::cs::{CSTaskGroupIndex, CSTaskImp};
+use eldenring::fd4::FD4TaskData;
+use fromsoftware_shared::{RecurringTaskHandle, SharedTaskImpExt};
+use std::sync::{LazyLock, Mutex};
 
 /// The game's own spawn of an item on the ground at the player's feet, as an
 /// enemy's drop, and the pointer to MapItemMan that it takes. Neither is bound by
@@ -87,4 +90,33 @@ pub fn give(id: u32, quantity: u32) -> Result<String, String> {
         "func_rva=0x{:x} map_item_man_rva=0x{:x} out={out}",
         s.rvas.0, s.rvas.1
     ))
+}
+
+/// Items waiting for a give later in the frame, and how the last one went.
+static LATE: Mutex<(Vec<(u32, u32)>, String)> = Mutex::new((Vec::new(), String::new()));
+
+/// Gives `id` from the MenuMan task group instead of the frame's start, to
+/// tell whether when in the frame the spawn is called is what leaves the
+/// dropped item empty.
+pub fn give_late(id: u32, quantity: u32) {
+    LATE.lock().unwrap().0.push((id, quantity));
+}
+
+pub fn late_status() -> String {
+    LATE.lock().unwrap().1.clone()
+}
+
+pub fn install(task: &CSTaskImp) -> RecurringTaskHandle<FD4TaskData> {
+    task.run_recurring(
+        |_: &FD4TaskData| {
+            let mut late = LATE.lock().unwrap();
+            for (id, qty) in std::mem::take(&mut late.0) {
+                late.1 = match give(id, qty) {
+                    Ok(info) => format!("ok 0x{id:08x} x{qty} {info}"),
+                    Err(e) => format!("error {e}"),
+                };
+            }
+        },
+        CSTaskGroupIndex::MenuMan,
+    )
 }
