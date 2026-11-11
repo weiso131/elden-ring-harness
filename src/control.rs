@@ -260,6 +260,26 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             crate::input::release();
             "ok stopped walks, lock-ons and held keys\n".into()
         }
+        ["give", id, rest @ ..] if rest.len() <= 1 => {
+            let id = id
+                .strip_prefix("0x")
+                .map_or_else(|| id.parse(), |h| u32::from_str_radix(h, 16));
+            let Ok(id) = id else {
+                return "error not an item id (decimal or 0x..)\n".into();
+            };
+            let qty = match rest {
+                [] => 1,
+                [n] => match n.parse() {
+                    Ok(n) if n > 0 => n,
+                    _ => return format!("error not a quantity: {n}\n"),
+                },
+                _ => unreachable!(),
+            };
+            match crate::item::give(id, qty) {
+                Ok(info) => format!("ok give 0x{id:08x} x{qty} {info}\n"),
+                Err(e) => format!("error {e}\n"),
+            }
+        }
         ["probe", name] => match crate::input::key(name) {
             Some(key) => {
                 crate::input::probe(key, 120);

@@ -104,6 +104,7 @@ cli/target/release/erh move 90 30    # 把移動搖桿推向鏡頭朝向右邊 9
 cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # 走到某個世界座標，距離小於 RADIUS
                                      # （預設 1）公尺為止；進度看 status 的 walk
 cli/target/release/erh stop          # 取消走路、鎖定和按住的鍵
+cli/target/release/erh give 2180000  # 把物品放進背包（這裡是卡利亞騎士劍）
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案
@@ -123,6 +124,13 @@ cli/target/release/erh stop          # 取消走路、鎖定和按住的鍵
 而玩家這時已經面向目標，下一次按就鎖得到。
 
 移動跟真的搖桿一樣是相對鏡頭，所以鎖定時 `move 0` 就是走向敵人。
+
+`give` 呼叫的是遊戲自己給物品的函式，用位元組樣式找到；樣式取自
+[eldenring-practice-tool](https://github.com/veeenu/eldenring-practice-tool)。回應會列出找到的位址，
+2.7.2 應該是 `func_rva=0x55bea0 map_item_man_rva=0x3d6eae0`。id 的最高幾個位元是分類（武器 0、防具
+0x10000000、護符 0x20000000、道具 0x40000000、戰灰 0x80000000），武器的強化等級直接加上去
+（2180010 是 +10 的卡利亞騎士劍）。id 可以查 Erd-Tools 的 `EquipParamWeapon.txt` 等檔案。
+拿到之後還是要從選單裝備。
 
 對兩階段的 boss 用 `targethp 0`，會直接把它打死，不會進二階段；`targethp 1` 則什麼都不會發生
 （瑪蓮妮亞實測如此）。換階段很可能是掛在「受到傷害」的流程上，而直接寫 HP 跳過了這個流程。

@@ -117,6 +117,7 @@ cli/target/release/erh move 90 30    # push the movement stick 90 degrees right 
 cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # steer to a world position until within
                                      # RADIUS (default 1) meters; see walk in status
 cli/target/release/erh stop          # drop walks, lock-ons and held keys
+cli/target/release/erh give 2180000  # put an item in the inventory (here Carian Knight's Sword)
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
@@ -141,6 +142,16 @@ it by then, so the next press locks.
 
 Movement follows the camera, as with a real stick, so `move 0` while locked on
 goes towards the enemy.
+
+`give` calls the game's own item grant, found by byte patterns taken from
+[eldenring-practice-tool](https://github.com/veeenu/eldenring-practice-tool);
+its answer shows the addresses found, which for 2.7.2 should be
+`func_rva=0x55bea0 map_item_man_rva=0x3d6eae0`. The id carries the category in
+its top bits (weapons 0, armor 0x10000000, talismans 0x20000000, goods
+0x40000000, ashes of war 0x80000000), and a weapon's upgrade level is added to
+it (2180010 is the sword at +10). Ids are listed in Erd-Tools'
+`EquipParamWeapon.txt` and the like. The item still has to be equipped from
+the menu.
 
 `targethp 0` kills a two-phase boss outright instead of starting its second phase,
 and `targethp 1` starts nothing (seen with Malenia). The phase change most likely
