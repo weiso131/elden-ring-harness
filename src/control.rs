@@ -307,10 +307,17 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 Err(e) => format!("error {e}\n"),
             }
         }
-        ["inv"] => match crate::equip::inventory(&dir.join("inv.tsv")) {
-            Ok(out) => format!("{out}; items in inv.tsv\n"),
-            Err(e) => format!("error {e}\n"),
-        },
+        ["inv", rest @ ..] if rest.len() <= 1 => {
+            // A name keeps one dump per name, to diff around a give.
+            let file = match rest {
+                [name] => format!("inv-{name}.tsv"),
+                _ => "inv.tsv".into(),
+            };
+            match crate::equip::inventory(&dir.join(&file)) {
+                Ok(out) => format!("{out}; items in {file}\n"),
+                Err(e) => format!("error {e}\n"),
+            }
+        }
         ["asm"] => match crate::equip::dump() {
             Ok(out) => out,
             Err(e) => format!("error {e}\n"),

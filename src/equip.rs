@@ -78,13 +78,13 @@ pub fn equip(id: u32, slot: usize) -> Result<String, String> {
     ))
 }
 
-/// Writes every item in the inventory and the storage box to `path`, and
-/// answers with how full each is.
+/// Writes every item, key items included, in the inventory and the storage
+/// box to `path`, and answers with how full each is.
 pub fn inventory(path: &std::path::Path) -> Result<String, String> {
     let w = unsafe { WorldChrMan::instance() }.map_err(|_| "no WorldChrMan")?;
     let p = w.main_player.as_ref().ok_or("no player")?;
     let data = unsafe { p.player_game_data.as_ref() };
-    let mut out = String::from("where\tindex\tid\thandle\tquantity\n");
+    let mut out = String::from("where\tlist\tindex\tid\thandle\tquantity\n");
     let mut summary = String::from("ok");
     let lists = [
         ("inventory", Some(&data.equipment.equip_inventory_data)),
@@ -101,15 +101,24 @@ pub fn inventory(path: &std::path::Path) -> Result<String, String> {
             items.key_items_len,
             items.key_items_capacity
         );
-        for (i, e) in items.normal_entries().iter().enumerate() {
-            if let Some(e) = e.as_option() {
-                let _ = writeln!(
-                    out,
-                    "{name}\t{i}\t0x{:08x}\t0x{:08x}\t{}",
-                    e.item_id.into_inner(),
-                    raw(e.gaitem_handle),
-                    e.quantity
-                );
+        // The storage box keeps no key items, and its key list may not be
+        // allocated.
+        let key: &[_] = if items.key_items_len > 0 {
+            items.current_key_entries()
+        } else {
+            &[]
+        };
+        for (list, entries) in [("key", key), ("normal", items.normal_entries())] {
+            for (i, e) in entries.iter().enumerate() {
+                if let Some(e) = e.as_option() {
+                    let _ = writeln!(
+                        out,
+                        "{name}\t{list}\t{i}\t0x{:08x}\t0x{:08x}\t{}",
+                        e.item_id.into_inner(),
+                        raw(e.gaitem_handle),
+                        e.quantity
+                    );
+                }
             }
         }
     }

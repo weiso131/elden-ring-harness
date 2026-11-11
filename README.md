@@ -120,7 +120,7 @@ cli/target/release/erh stop          # drop walks, lock-ons and held keys
 cli/target/release/erh give 2180000  # drop an item at the player's feet (here Carian Knight's Sword)
 cli/target/release/erh equip 2180000 # put an inventory weapon in a weapon slot (default 1, right hand 1)
 cli/target/release/erh asm           # list the six weapon slots
-cli/target/release/erh inv           # write the inventory and storage box to inv.tsv
+cli/target/release/erh inv [NAME]    # write the inventory and storage box to inv[-NAME].tsv
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
