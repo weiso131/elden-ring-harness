@@ -148,12 +148,10 @@ if [ "$hp" != none ]; then
 		esac
 	fi
 	if [ "$esc" = yes ]; then
-		# The phase change cutscene starts a moment after the HP drops. The
-		# first Esc brings up the skip prompt and the second takes it; 235
-		# is Esc in the virtual input, found with scan.
+		# The phase change cutscene starts a moment after the HP drops. One
+		# Esc skips it; a second opens the menu, which the mod's presses
+		# cannot close. 235 is Esc in the virtual input, found with scan.
 		sleep 2
-		"$erh" rawpress 235 3
-		sleep 1
 		"$erh" rawpress 235 3
 		# The cutscene drops the lock.
 		sleep 2
