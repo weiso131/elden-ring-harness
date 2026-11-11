@@ -148,12 +148,12 @@ cli/target/release/erh inv [NAME]    # 把背包和倉庫的內容寫到 inv[-NA
 
 ```sh
 scripts/boss.sh                        # 互動式
-scripts/boss.sh radahn-dlc --nohit     # 二階段的 DLC 拉塔恩
-scripts/boss.sh radahn-dlc --no-hp     # 一階段
+scripts/boss.sh radahn-dlc             # 一階段的 DLC 拉塔恩
+scripts/boss.sh radahn-dlc --phase2 --nohit # 二階段
 ```
 
 它會關掉 boss 的旗標、傳送到圓桌廳堂再傳送回來（讓 boss 所在的地圖重新載入）、等 boss 載入，
-再設定它的 HP；只在鎖定時才會換階段的 boss，會先鎖定。最後會面向 boss 並鎖定，給 `--no-lock` 就不會。
+給 `--phase2` 時再把 HP 設成表裡的轉階段血量；只在鎖定時才會換階段的 boss 會先鎖定，轉階段有動畫的 boss 會按 Esc 跳過。最後會面向 boss 並鎖定，給 `--no-lock` 就不會。
 
 `scripts/path.sh` 錄下手動走過的路線，再照著走一次，給那些戰鬥從霧門開始、傳送會跳過霧門的 boss 用：
 

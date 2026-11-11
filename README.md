@@ -173,13 +173,14 @@ it runs straight through (`--help` lists the options, `--list` the bosses):
 
 ```sh
 scripts/boss.sh                        # asks
-scripts/boss.sh radahn-dlc --nohit     # DLC Radahn in his second phase
-scripts/boss.sh radahn-dlc --no-hp     # phase one
+scripts/boss.sh radahn-dlc             # DLC Radahn in his first phase
+scripts/boss.sh radahn-dlc --phase2 --nohit # in his second
 ```
 
 It clears the boss's flags, warps to Roundtable Hold and back so the boss's map is
-reloaded, waits for the boss to be loaded, and sets its HP, locking on first for
-bosses that change phase only while locked on. It ends turned to the boss and
+reloaded, and waits for the boss to be loaded. With `--phase2` it then sets the
+boss's HP to the table's phase HP, locking on first for bosses that change phase
+only while locked on, and pressing Esc for those whose change starts a cutscene. It ends turned to the boss and
 locked on, unless `--no-lock` is given.
 
 `scripts/path.sh` records a route walked by hand and walks it again, for

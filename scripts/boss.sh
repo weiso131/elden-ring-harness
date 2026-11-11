@@ -12,9 +12,10 @@ Options:
   --no-nodead     let the player die
   --nohit         enemy attacks do not hit the player (grabs that kill
                   through nodead included)
-  --hp PCT        set the boss's HP to PCT% once it is there; defaults to the
-                  table's phase HP
-  --no-hp         leave the boss's HP alone, for a phase-one fight
+  --phase2        start the second phase: set the boss's HP to the table's
+                  phase HP
+  --hp PCT        set the boss's HP to PCT% (PCT@RANK picks a character by
+                  max HP rank, as `erh chars` lists them)
   --no-lock       do not turn to the boss and lock on at the end
   -h, --help      show this help
 
@@ -31,7 +32,7 @@ table=$here/../bosses.tsv
 rows() { grep -v '^#' "$table" | grep -v '^$'; }
 list() { rows | awk -F'\t' '{ printf "%-12s %s%s\n", $1, $11, ($10 == "yes" ? "" : "  (not checked in game)") }'; }
 
-boss= nodead=on nohit=off hp=table lockon=yes
+boss= nodead=on nohit=off hp=none lockon=yes
 while [ $# -gt 0 ]; do
 	case $1 in
 	-h | --help) usage; exit 0 ;;
@@ -40,6 +41,7 @@ while [ $# -gt 0 ]; do
 	--no-nodead) nodead=off ;;
 	--nohit) nohit=on ;;
 	--hp) hp=$2; shift ;;
+	--phase2) hp=table ;;
 	--no-hp) hp=none ;;
 	--no-lock) lockon=no ;;
 	-*) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -65,10 +67,11 @@ if [ -z "$boss" ]; then
 	case $(ask "enemy attacks miss the player (nohit)? y/n" n) in y*) nohit=on ;; esac
 	phase=$(rows | awk -F'\t' -v b="$boss" '$1 == b { print $7 }')
 	if [ "$phase" != - ] && [ -n "$phase" ]; then
-		hp=$(ask "set the boss's HP to % (none to skip)" "$phase")
-		[ "$hp" = none ] || [ -n "$hp" ] || hp=none
+		case $(ask "start in the second phase? y/n" n) in
+		y*) hp=$(ask "set the boss's HP to %" "$phase") ;;
+		esac
 	else
-		hp=$(ask "set the boss's HP to % (none to skip)" none)
+		hp=$(ask "set the boss's HP to % (none to skip; no phase HP known)" none)
 	fi
 fi
 
