@@ -15,10 +15,11 @@ Options:
   --hp PCT        set the boss's HP to PCT% once it is there; defaults to the
                   table's phase HP
   --no-hp         leave the boss's HP alone, for a phase-one fight
+  --no-lock       do not turn to the boss and lock on at the end
   -h, --help      show this help
 
-Presses (the lock-on before setting HP) only reach the game while its window
-has focus: keep the mouse over it.
+Presses (the lock-on) only reach the game while its window has focus: keep
+the mouse over it.
 USAGE
 }
 
@@ -30,7 +31,7 @@ table=$here/../bosses.tsv
 rows() { grep -v '^#' "$table" | grep -v '^$'; }
 list() { rows | awk -F'\t' '{ printf "%-12s %s%s\n", $1, $11, ($10 == "yes" ? "" : "  (not checked in game)") }'; }
 
-boss= nodead=on nohit=off hp=table
+boss= nodead=on nohit=off hp=table lockon=yes
 while [ $# -gt 0 ]; do
 	case $1 in
 	-h | --help) usage; exit 0 ;;
@@ -40,6 +41,7 @@ while [ $# -gt 0 ]; do
 	--nohit) nohit=on ;;
 	--hp) hp=$2; shift ;;
 	--no-hp) hp=none ;;
+	--no-lock) lockon=no ;;
 	-*) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
 	*) boss=$1 ;;
 	esac
@@ -76,6 +78,19 @@ col() { echo "$row" | cut -f"$1"; }
 block=$(col 2) grace=$(col 3) flags=$(col 4) fight=$(col 5) fog=$(col 6) lock=$(col 8) esc=$(col 9)
 [ "$hp" = table ] && hp=$(col 7)
 [ "$hp" = - ] && hp=none
+
+locked=no
+wait_lock() {
+	for _ in $(seq 60); do
+		case $(field lockon) in
+		done*) return ;;
+		"no lock" | "no target") echo "not locked on; is the game window focused?" >&2; exit 1 ;;
+		esac
+		sleep 0.1
+	done
+	echo "timed out locking on" >&2
+	exit 1
+}
 
 field() { "$erh" status | awk -F'\t' -v k="$1" '$1 == k { print $2 }'; }
 wait_for() { # wait_for KEY OP VALUE [SECONDS], OP is = != or -gt
@@ -122,13 +137,8 @@ if [ "$hp" != none ]; then
 		# The phase only changes while locked on, and a second lockon press
 		# drops the lock, so the mod presses once and sets HP as it locks.
 		"$erh" lockhp "$hp"
-		for _ in $(seq 40); do
-			case $(field lockhp) in
-			done*) break ;;
-			"no lock") echo "not locked on; is the game window focused?" >&2; exit 1 ;;
-			esac
-			sleep 0.1
-		done
+		wait_lock
+		locked=yes
 	else
 		# PCT@RANK picks a character by HP rank, for fights where the one to
 		# hit is not the nearest of the big ones.
@@ -143,5 +153,11 @@ if [ "$hp" != none ]; then
 		sleep 2
 		"$erh" keypress 0x01 3
 	fi
+fi
+# The mod turns the player to the boss and presses lockon, retrying since a
+# press with the boss out of view only swings the camera behind the player.
+if [ "$lockon" = yes ] && [ "$locked" = no ]; then
+	"$erh" lockon
+	wait_lock
 fi
 "$erh" status

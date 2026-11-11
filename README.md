@@ -98,7 +98,9 @@ cli/target/release/erh targethp 40   # set the target's HP to 40% of max: the lo
 cli/target/release/erh targethp 1 2  # the same for the character ranked 2nd by max HP
 cli/target/release/erh chars         # list the ten loaded characters with the most max HP
 cli/target/release/erh nohit on      # enemy attacks do not hit the player
-cli/target/release/erh lockhp 50     # press lockon once, then set the locked enemy's HP the frame it locks
+cli/target/release/erh lockon        # turn to the target and press lockon, retrying until it locks
+cli/target/release/erh lockhp 50     # the same, then set the locked enemy's HP the frame it locks
+cli/target/release/erh face          # turn the player to the target without locking on
 cli/target/release/erh tp X Y Z [Q0 Q1 Q2 Q3] # move the player to a world position and facing,
                                      # as status's `world` and `facing` show them
 cli/target/release/erh exterminate on # every hit by the player deals 9999999 damage
@@ -128,6 +130,10 @@ keyboard feed, so it follows the player's key bindings. Presses only reach the g
 while its window has focus, so run `erh` from somewhere that does not take it, such
 as ssh from another device.
 
+`lockon` faces the player to the target and presses once a try: with the
+target out of view a press only swings the camera behind the player, who faces
+it by then, so the next press locks.
+
 `targethp 0` kills a two-phase boss outright instead of starting its second phase,
 and `targethp 1` starts nothing (seen with Malenia). The phase change most likely
 hangs off taking damage, which writing HP skips; `exterminate on` and one hit is
@@ -150,7 +156,8 @@ scripts/boss.sh radahn-dlc --no-hp     # phase one
 
 It clears the boss's flags, warps to Roundtable Hold and back so the boss's map is
 reloaded, waits for the boss to be loaded, and sets its HP, locking on first for
-bosses that change phase only while locked on.
+bosses that change phase only while locked on. It ends turned to the boss and
+locked on, unless `--no-lock` is given.
 
 `--title` presses E on a uinput keyboard (`scripts/title.py`), since the title menus
 do not take the mod's presses, five seconds apart, until `status` shows the player in

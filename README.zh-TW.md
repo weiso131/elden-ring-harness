@@ -86,7 +86,9 @@ cli/target/release/erh targethp 40   # 把目標的 HP 設成最大值的 40%：
 cli/target/release/erh targethp 1 2  # 同上，但對象是最大 HP 排第 2 的角色
 cli/target/release/erh chars         # 列出已載入角色中最大 HP 最高的十個
 cli/target/release/erh nohit on      # 敵人的攻擊打不到玩家
-cli/target/release/erh lockhp 50     # 按一次鎖定，鎖到的那一幀立刻設定敵人的 HP
+cli/target/release/erh lockon        # 轉向目標再按鎖定，沒鎖到就重試
+cli/target/release/erh lockhp 50     # 同上，鎖到的那一幀立刻設定敵人的 HP
+cli/target/release/erh face          # 把玩家轉向目標，不鎖定
 cli/target/release/erh tp X Y Z [Q0 Q1 Q2 Q3] # 把玩家移到某個世界座標和朝向
                                      # （就是 status 裡 `world`、`facing` 顯示的值）
 cli/target/release/erh exterminate on # 玩家每一擊都造成 9999999 傷害
@@ -113,6 +115,9 @@ cli/target/release/erh mousepress 0 3 # 在滑鼠裝置裡按住某個按鈕（0
 按鍵寫進的是手把和鍵盤共用的虛擬輸入，所以會照玩家自己的按鍵設定。遊戲視窗有焦點時按鍵才有效，
 所以 `erh` 要從不會搶走焦點的地方執行，例如從另一台裝置 ssh 進來。
 
+`lockon` 每次嘗試都會先把玩家轉向目標再按一次：目標不在畫面裡時，按鎖定只會把鏡頭轉到玩家背後，
+而玩家這時已經面向目標，下一次按就鎖得到。
+
 對兩階段的 boss 用 `targethp 0`，會直接把它打死，不會進二階段；`targethp 1` 則什麼都不會發生
 （瑪蓮妮亞實測如此）。換階段很可能是掛在「受到傷害」的流程上，而直接寫 HP 跳過了這個流程。
 `exterminate on` 再打一下，是想改走受傷害的流程來結束一個階段，還沒實測。
@@ -130,7 +135,7 @@ scripts/boss.sh radahn-dlc --no-hp     # 一階段
 ```
 
 它會關掉 boss 的旗標、傳送到圓桌廳堂再傳送回來（讓 boss 所在的地圖重新載入）、等 boss 載入，
-再設定它的 HP；只在鎖定時才會換階段的 boss，會先鎖定。
+再設定它的 HP；只在鎖定時才會換階段的 boss，會先鎖定。最後會面向 boss 並鎖定，給 `--no-lock` 就不會。
 
 `--title` 用 uinput 虛擬鍵盤按 E（`scripts/title.py`），因為標題選單不吃模組的按鍵。每 5 秒按一次，
 直到 `status` 顯示玩家進到遊戲為止。它跟真的鍵盤一樣，遊戲視窗要有焦點。需要登入的使用者能寫

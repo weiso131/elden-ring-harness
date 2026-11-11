@@ -1,6 +1,6 @@
 use eldenring::cs::{
     BonfireWarpParam, CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, ChrIns, GameMan,
-    SoloParamRepository, UserInputKey, WorldChrMan, WorldChrManDbgFlags,
+    SoloParamRepository, WorldChrMan, WorldChrManDbgFlags,
 };
 use eldenring::fd4::FD4TaskData;
 use eldenring::rotation::Quaternion;
@@ -20,20 +20,6 @@ struct Shared {
     done: Vec<(String, String)>,
     status: String,
 }
-
-/// A lockhp in progress: HP share to set, frames left to wait for the lock,
-/// and how the last one ended.
-struct LockHp {
-    pct: u32,
-    left: u32,
-    result: String,
-}
-
-static LOCK_HP: Mutex<LockHp> = Mutex::new(LockHp {
-    pct: 0,
-    left: 0,
-    result: String::new(),
-});
 
 static SHARED: Mutex<Shared> = Mutex::new(Shared {
     pending: VecDeque::new(),
@@ -61,7 +47,7 @@ pub fn serve(dir: &Path, interval: Duration) -> io::Result<()> {
                 let out = run(&cmd, frame, &run_dir);
                 s.done.push((id, out));
             }
-            lock_hp_step();
+            crate::drive::step();
             s.status = status(frame);
         },
         CSTaskGroupIndex::FrameBegin,
@@ -222,18 +208,24 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
             let Ok(pct) = pct.parse::<u32>() else {
                 return format!("error not a percentage: {pct}\n");
             };
-            // A second lockon press would undo the lock, so press once and set
-            // HP the frame the lock appears.
-            crate::input::hold(
-                crate::input::Target::Key(UserInputKey::ResetCameraTapped),
-                2,
-            );
-            *LOCK_HP.lock().unwrap() = LockHp {
-                pct: pct.min(100),
-                left: 120,
-                result: "waiting".into(),
+            crate::drive::lock(Some(pct.min(100)));
+            "ok lockhp facing the target to lock on; see lockon in status\n".into()
+        }
+        ["lockon"] => {
+            crate::drive::lock(None);
+            "ok lockon facing the target to lock on; see lockon in status\n".into()
+        }
+        ["face"] => {
+            let Ok(w) = (unsafe { WorldChrMan::instance_mut() }) else {
+                return "error no WorldChrMan\n".into();
             };
-            "ok lockhp waiting for a lock; see lockhp in status\n".into()
+            let Some(t) = target(w) else {
+                return "error no target\n".into();
+            };
+            match crate::drive::face(w, t) {
+                Ok(yaw) => format!("ok face yaw={yaw:.1}\n"),
+                Err(e) => format!("error {e}\n"),
+            }
         }
         ["probe", name] => match crate::input::key(name) {
             Some(key) => {
@@ -408,7 +400,7 @@ fn by_hp(w: &WorldChrMan) -> Vec<NonNull<ChrIns>> {
 /// loaded characters with the most max HP. Nearest, not toughest: a fight can
 /// keep its next phase's character loaded out of reach, as Rykard waits under
 /// his arena with more HP than the serpent the player fights.
-fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
+pub fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
     let p = w.main_player.as_ref()?;
     if let Some(t) = w.chr_ins_by_handle(&p.locked_on_enemy) {
         return Some(NonNull::from(t));
@@ -425,28 +417,6 @@ fn target(w: &WorldChrMan) -> Option<NonNull<ChrIns>> {
         .min_by(|a, b| dist(a).total_cmp(&dist(b)))
 }
 
-fn lock_hp_step() {
-    let mut l = LOCK_HP.lock().unwrap();
-    if l.left == 0 {
-        return;
-    }
-    l.left -= 1;
-    let Ok(w) = (unsafe { WorldChrMan::instance_mut() }) else {
-        return;
-    };
-    let Some(handle) = w.main_player.as_ref().map(|p| p.locked_on_enemy) else {
-        return;
-    };
-    if let Some(t) = w.chr_ins_by_handle_mut(&handle) {
-        let data = &mut t.modules.data;
-        data.hp = (data.max_hp as i64 * l.pct as i64 / 100) as i32;
-        l.result = format!("done hp={}/{}", data.hp, data.max_hp);
-        l.left = 0;
-    } else if l.left == 0 {
-        l.result = "no lock".into();
-    }
-}
-
 fn status(frame: u64) -> String {
     let mut s = format!("key\tvalue\nframe\t{frame}\n");
     // What loading a save changes here, watched from the title screen while
@@ -458,10 +428,7 @@ fn status(frame: u64) -> String {
             g.save_slot, g.requested_save_slot_load_index, g.save_state
         );
     }
-    let lock_hp = LOCK_HP.lock().unwrap().result.clone();
-    if !lock_hp.is_empty() {
-        let _ = writeln!(s, "lockhp\t{lock_hp}");
-    }
+    crate::drive::status(&mut s);
     if let Some(sc) = crate::input::scan_status() {
         let _ = writeln!(s, "scan\t{sc}");
     }
