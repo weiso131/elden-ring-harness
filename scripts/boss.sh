@@ -148,10 +148,16 @@ if [ "$hp" != none ]; then
 		esac
 	fi
 	if [ "$esc" = yes ]; then
-		# The phase change cutscene starts a moment after the HP drops. Esc
-		# goes to the keyboard device, which screens like this one read.
+		# The phase change cutscene starts a moment after the HP drops. The
+		# first Esc brings up the skip prompt and the second takes it; 235
+		# is Esc in the virtual input, found with scan.
 		sleep 2
-		"$erh" keypress 0x01 3
+		"$erh" rawpress 235 3
+		sleep 1
+		"$erh" rawpress 235 3
+		# The cutscene drops the lock.
+		sleep 2
+		locked=no
 	fi
 fi
 # The mod turns the player to the boss and presses lockon, retrying since a
