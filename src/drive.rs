@@ -46,7 +46,7 @@ pub fn lock(hp: Option<u32>) {
     };
 }
 
-/// A walk to a point, steering every frame.
+/// A walk to a point in the current block, steering every frame.
 struct Walk {
     to: (f32, f32),
     radius: f32,
@@ -204,8 +204,10 @@ fn walk_step() {
     else {
         return;
     };
-    let me = &p.chr_ins.modules.physics.position;
-    let (dx, dz) = (walk.to.0 - me.0, walk.to.1 - me.2);
+    // The physics position is relative to an origin the game moves as the
+    // player crosses the map, so the walk is in the block's own coordinates.
+    let me = &p.block_position;
+    let (dx, dz) = (walk.to.0 - me.x, walk.to.1 - me.z);
     let dist = (dx * dx + dz * dz).sqrt();
     if dist < walk.radius {
         walk.left = 0;

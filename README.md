@@ -114,8 +114,8 @@ cli/target/release/erh keypress 0x12 3 # hold a key by DirectInput code (0x12 is
 cli/target/release/erh mousepress 0 3 # hold a mouse button (0 is left) in the mouse device
 cli/target/release/erh move 90 30    # push the movement stick 90 degrees right of where the camera
                                      # looks, for 30 frames
-cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # steer to a world position until within
-                                     # RADIUS (default 1) meters; see walk in status
+cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # steer to a position in the block (status's
+                                     # `pos`) until within RADIUS (default 1) meters; see walk
 cli/target/release/erh stop          # drop walks, lock-ons and held keys
 cli/target/release/erh give 2180000  # put an item in the inventory (here Carian Knight's Sword)
 ```

@@ -1,12 +1,13 @@
 #!/bin/sh
-# Records a route walked by hand as world positions, and walks it again.
+# Records a route walked by hand as positions in the block, and walks it again.
 usage() {
 	cat <<'USAGE'
 Usage: scripts/path.sh record FILE [STEP]
        scripts/path.sh play FILE [RADIUS]
 
-record  appends the player's world position "x y z" to FILE each time it has
-        moved STEP meters (default 2) along the ground, until Ctrl-C
+record  appends the player's position in the block ("x y z", as status's pos
+        shows it) to FILE each time it has moved STEP meters (default 2)
+        along the ground, until Ctrl-C
 play    walks to each point of FILE in turn with walkto, a point counting as
         reached within RADIUS meters (default 1)
 
@@ -27,7 +28,7 @@ record)
 	step=${3:-2}
 	last=
 	while :; do
-		pos=$(field world)
+		pos=$(field pos)
 		if [ -n "$pos" ] && echo "$last $pos" | awk -v s="$step" \
 			'NF == 3 || ($1 - $4) ^ 2 + ($3 - $6) ^ 2 >= s * s { ok = 1 } END { exit !ok }'; then
 			echo "$pos" | tee -a "$file"

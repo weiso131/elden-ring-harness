@@ -101,7 +101,7 @@ cli/target/release/erh rawpress 252 3 # 按住某個原始輸入編號，例如�
 cli/target/release/erh keypress 0x12 3 # 在鍵盤裝置裡按住某個 DirectInput 鍵碼（0x12 是 E）
 cli/target/release/erh mousepress 0 3 # 在滑鼠裝置裡按住某個按鈕（0 是左鍵）
 cli/target/release/erh move 90 30    # 把移動搖桿推向鏡頭朝向右邊 90 度，持續 30 幀
-cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # 走到某個世界座標，距離小於 RADIUS
+cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # 走到區塊內的某個座標（status 的 `pos`），距離小於 RADIUS
                                      # （預設 1）公尺為止；進度看 status 的 walk
 cli/target/release/erh stop          # 取消走路、鎖定和按住的鍵
 cli/target/release/erh give 2180000  # 把物品放進背包（這裡是卡利亞騎士劍）
