@@ -107,6 +107,7 @@ cli/target/release/erh stop          # 取消走路、鎖定和按住的鍵
 cli/target/release/erh give 2180000  # 把物品放進背包（這裡是卡利亞騎士劍）
 cli/target/release/erh equip 2180000 # 把背包裡的武器放進武器欄位（預設 1，右手 1）
 cli/target/release/erh asm           # 列出六個武器欄位
+cli/target/release/erh inv           # 把背包和倉庫的內容寫到 inv.tsv
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案

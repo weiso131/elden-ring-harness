@@ -78,3 +78,41 @@ pub fn equip(id: u32, slot: usize) -> Result<String, String> {
     ))
 }
 
+/// Writes every item in the inventory and the storage box to `path`, and
+/// answers with how full each is.
+pub fn inventory(path: &std::path::Path) -> Result<String, String> {
+    let w = unsafe { WorldChrMan::instance() }.map_err(|_| "no WorldChrMan")?;
+    let p = w.main_player.as_ref().ok_or("no player")?;
+    let data = unsafe { p.player_game_data.as_ref() };
+    let mut out = String::from("where\tindex\tid\thandle\tquantity\n");
+    let mut summary = String::from("ok");
+    let lists = [
+        ("inventory", Some(&data.equipment.equip_inventory_data)),
+        ("storage", data.storage.as_deref()),
+    ];
+    for (name, inv) in lists {
+        let Some(inv) = inv else { continue };
+        let items = &inv.items_data;
+        let _ = write!(
+            summary,
+            " {name}: normal {}/{} key {}/{}",
+            items.normal_items_len,
+            items.normal_items_capacity,
+            items.key_items_len,
+            items.key_items_capacity
+        );
+        for (i, e) in items.normal_entries().iter().enumerate() {
+            if let Some(e) = e.as_option() {
+                let _ = writeln!(
+                    out,
+                    "{name}\t{i}\t0x{:08x}\t0x{:08x}\t{}",
+                    e.item_id.into_inner(),
+                    raw(e.gaitem_handle),
+                    e.quantity
+                );
+            }
+        }
+    }
+    std::fs::write(path, out).map_err(|e| e.to_string())?;
+    Ok(summary)
+}
