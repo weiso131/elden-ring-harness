@@ -117,7 +117,7 @@ cli/target/release/erh move 90 30    # push the movement stick 90 degrees right 
 cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # steer to a position in the block (status's
                                      # `pos`) until within RADIUS (default 1) meters; see walk
 cli/target/release/erh stop          # drop walks, lock-ons and held keys
-cli/target/release/erh give 2180000  # put an item in the inventory (here Carian Knight's Sword)
+cli/target/release/erh give 2180000  # drop an item at the player's feet (here Carian Knight's Sword)
 cli/target/release/erh equip 2180000 # put an inventory weapon in a weapon slot (default 1, right hand 1)
 cli/target/release/erh asm           # list the six weapon slots
 cli/target/release/erh inv           # write the inventory and storage box to inv.tsv
@@ -146,7 +146,8 @@ it by then, so the next press locks.
 Movement follows the camera, as with a real stick, so `move 0` while locked on
 goes towards the enemy.
 
-`give` calls the game's own item grant, found by byte patterns taken from
+`give` drops the item on the ground like an enemy's drop, for `press action`
+to pick up. It calls the game's own spawn, found by byte patterns taken from
 [eldenring-practice-tool](https://github.com/veeenu/eldenring-practice-tool);
 its answer shows the addresses found, which for 2.7.2 should be
 `func_rva=0x55bea0 map_item_man_rva=0x3d6eae0`. The id carries the category in

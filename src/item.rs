@@ -4,8 +4,8 @@ use pelite::pe64::Pe;
 use std::ffi::c_void;
 use std::sync::LazyLock;
 
-/// The game's own item grant, the one picking an item up goes through, and
-/// the pointer to MapItemMan that it takes. Neither is bound by
+/// The game's own spawn of an item on the ground at the player's feet, as an
+/// enemy's drop, and the pointer to MapItemMan that it takes. Neither is bound by
 /// fromsoftware-rs; the patterns and the arguments are the ones
 /// eldenring-practice-tool (veeenu) uses for 2.7.2.
 const SPAWN_PATTERN: &str = "48 8B C4 56 57 41 56 48 81 EC ? ? ? ? 48 C7 44 24 ? ? ? ? ? \
@@ -63,7 +63,8 @@ static SPAWN: LazyLock<Result<Spawn, String>> = LazyLock::new(|| {
     })
 });
 
-/// Puts `quantity` of item `id` in the player's inventory. `id` carries the
+/// Drops `quantity` of item `id` at the player's feet; pressing action picks
+/// it up. `id` carries the
 /// category in its top bits (weapons 0, armor 0x10000000, talismans
 /// 0x20000000, goods 0x40000000, ashes of war 0x80000000) and a weapon's
 /// upgrade level in its last digits. Must run on the main thread.

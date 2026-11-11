@@ -276,7 +276,7 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 _ => unreachable!(),
             };
             match crate::item::give(id, qty) {
-                Ok(info) => format!("ok give 0x{id:08x} x{qty} {info}\n"),
+                Ok(info) => format!("ok give 0x{id:08x} x{qty} dropped at the player's feet; press action to pick it up {info}\n"),
                 Err(e) => format!("error {e}\n"),
             }
         }

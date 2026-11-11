@@ -104,7 +104,7 @@ cli/target/release/erh move 90 30    # 把移動搖桿推向鏡頭朝向右邊 9
 cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # 走到區塊內的某個座標（status 的 `pos`），距離小於 RADIUS
                                      # （預設 1）公尺為止；進度看 status 的 walk
 cli/target/release/erh stop          # 取消走路、鎖定和按住的鍵
-cli/target/release/erh give 2180000  # 把物品放進背包（這裡是卡利亞騎士劍）
+cli/target/release/erh give 2180000  # 把物品掉在玩家腳邊（這裡是卡利亞騎士劍）
 cli/target/release/erh equip 2180000 # 把背包裡的武器放進武器欄位（預設 1，右手 1）
 cli/target/release/erh asm           # 列出六個武器欄位
 cli/target/release/erh inv           # 把背包和倉庫的內容寫到 inv.tsv
@@ -128,7 +128,8 @@ cli/target/release/erh inv           # 把背包和倉庫的內容寫到 inv.tsv
 
 移動跟真的搖桿一樣是相對鏡頭，所以鎖定時 `move 0` 就是走向敵人。
 
-`give` 呼叫的是遊戲自己給物品的函式，用位元組樣式找到；樣式取自
+`give` 會像敵人掉寶一樣把物品掉在地上，要用 `press action` 撿起來。它呼叫的是遊戲自己生成物品的函式，
+用位元組樣式找到；樣式取自
 [eldenring-practice-tool](https://github.com/veeenu/eldenring-practice-tool)。回應會列出找到的位址，
 2.7.2 應該是 `func_rva=0x55bea0 map_item_man_rva=0x3d6eae0`。id 的最高幾個位元是分類（武器 0、防具
 0x10000000、護符 0x20000000、道具 0x40000000、戰灰 0x80000000），武器的強化等級直接加上去
