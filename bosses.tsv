@@ -4,7 +4,7 @@ radahn-dlc	m20_01_00_00	200100	20010800,20010801	-	-	50	yes	yes	yes	Promised Con
 malenia	m15_00_00_00	150004	15000800,15000801	-	-	-	no	no	no	Malenia, Blade of Miquella
 godrick	m10_00_00_00	100000	10000800,10000801	-	-19.72 1.87 3.00	50	no	no	no	Godrick the Grafted
 rennala	m14_00_00_00	140000	14000800,14000801	-	-	-	no	no	no	Rennala, Queen of the Full Moon
-rykard	m16_00_00_00	160000	16000800,16000801	-	-	1@3	no	no	yes	Rykard, Lord of Blasphemy
+rykard	m16_00_00_00	160000	16000800,16000801	-	-	1@3	no	yes	yes	Rykard, Lord of Blasphemy
 mohg	m12_05_00_00	120500	12050800,12050801	-	-3.77 -1.78 6.70	50	no	no	no	Mohg, Lord of Blood
 maliketh	m13_00_00_00	130000	13000800,13000801	-	-	50	no	no	no	Maliketh, the Black Blade
 morgott	m11_00_00_00	110000	11000800,11000801	-	-	50	no	no	no	Morgott, the Omen King
@@ -12,4 +12,4 @@ godfrey	m11_05_00_00	110500	11050800,11050801	-	-	50	no	no	no	Godfrey, First Eld
 mohg-omen	m35_00_00_00	350000	35000800,35000801	-	-	-	no	no	no	Mohg, the Omen
 elden-beast	m19_00_00_00	190000	19000800,19000801	-	13.66 7.07 -7.72	-	no	no	no	Radagon of the Golden Order / Elden Beast
 radahn	m60_52_38_00	64523800	1252380800,1252380801	-	-	50	no	no	no	Starscourge Radahn
-bayle	m61_55_39_00	68553900	2054390800,2054390801	-	-	-	no	no	yes	Bayle the Dread (DLC)
+bayle	m61_55_39_00	68553900	2054390800,2054390801	-	-	50@1	no	no	yes	Bayle the Dread (DLC)
