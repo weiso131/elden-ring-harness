@@ -100,6 +100,10 @@ cli/target/release/erh scan          # 120 幀內，列出被按下的原始輸�
 cli/target/release/erh rawpress 252 3 # 按住某個原始輸入編號，例如用 scan 找到的選單按鍵
 cli/target/release/erh keypress 0x12 3 # 在鍵盤裝置裡按住某個 DirectInput 鍵碼（0x12 是 E）
 cli/target/release/erh mousepress 0 3 # 在滑鼠裝置裡按住某個按鈕（0 是左鍵）
+cli/target/release/erh move 90 30    # 把移動搖桿推向鏡頭朝向右邊 90 度，持續 30 幀
+cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # 走到某個世界座標，距離小於 RADIUS
+                                     # （預設 1）公尺為止；進度看 status 的 walk
+cli/target/release/erh stop          # 取消走路、鎖定和按住的鍵
 ```
 
 `erh` 會用 `$ERH_DIR`、`-d RUN_DIR`，都沒有的話用 `./out` 裡最新的一次。每個指令是一個檔案
@@ -117,6 +121,8 @@ cli/target/release/erh mousepress 0 3 # 在滑鼠裝置裡按住某個按鈕（0
 
 `lockon` 每次嘗試都會先把玩家轉向目標再按一次：目標不在畫面裡時，按鎖定只會把鏡頭轉到玩家背後，
 而玩家這時已經面向目標，下一次按就鎖得到。
+
+移動跟真的搖桿一樣是相對鏡頭，所以鎖定時 `move 0` 就是走向敵人。
 
 對兩階段的 boss 用 `targethp 0`，會直接把它打死，不會進二階段；`targethp 1` 則什麼都不會發生
 （瑪蓮妮亞實測如此）。換階段很可能是掛在「受到傷害」的流程上，而直接寫 HP 跳過了這個流程。
@@ -136,6 +142,13 @@ scripts/boss.sh radahn-dlc --no-hp     # 一階段
 
 它會關掉 boss 的旗標、傳送到圓桌廳堂再傳送回來（讓 boss 所在的地圖重新載入）、等 boss 載入，
 再設定它的 HP；只在鎖定時才會換階段的 boss，會先鎖定。最後會面向 boss 並鎖定，給 `--no-lock` 就不會。
+
+`scripts/path.sh` 錄下手動走過的路線，再照著走一次，給那些戰鬥從霧門開始、傳送會跳過霧門的 boss 用：
+
+```sh
+scripts/path.sh record godrick.path  # 從賜福走到霧門，然後 Ctrl-C
+scripts/path.sh play godrick.path    # 用 walkto 一個點一個點走
+```
 
 `--title` 用 uinput 虛擬鍵盤按 E（`scripts/title.py`），因為標題選單不吃模組的按鍵。每 5 秒按一次，
 直到 `status` 顯示玩家進到遊戲為止。它跟真的鍵盤一樣，遊戲視窗要有焦點。需要登入的使用者能寫

@@ -15,9 +15,9 @@ pub enum Target {
     Dik(u8),
     /// A mouse button in the mouse device's own state.
     Mouse(u8),
-    /// A movement action pushed all the way, through the in-game pad's analog
-    /// bindings: movement is a stick, not a button.
-    Stick(UserInputKey),
+    /// A movement action pushed this far (0 to 1), through the in-game pad's
+    /// analog bindings: movement is a stick, not a button.
+    Stick(UserInputKey, f32),
 }
 
 /// Targets being held and for how many more frames.
@@ -50,6 +50,10 @@ pub fn stick(name: &str) -> Option<UserInputKey> {
 
 pub fn hold(target: Target, frames: u32) {
     HELD.lock().unwrap().push((target, frames));
+}
+
+pub fn release() {
+    HELD.lock().unwrap().clear();
 }
 
 /// Frames left to scan, and for each raw index seen down, in how many frames.
@@ -201,12 +205,12 @@ fn press(target: Target) -> Result<(), &'static str> {
             kb.di_keyboard_state[k as usize] = 0x80;
             return Ok(());
         }
-        Target::Stick(key) => {
+        Target::Stick(key, v) => {
             let idx = indices_of(key, InputType::IsStickMoving)?;
             let d = device()?;
             for i in idx {
-                d.virtual_input_data.set_analog(i, 1.0);
-                d.initial_virtual_input_data.set_analog(i, 1.0);
+                d.virtual_input_data.set_analog(i, v);
+                d.initial_virtual_input_data.set_analog(i, v);
             }
             return Ok(());
         }

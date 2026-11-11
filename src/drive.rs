@@ -1,5 +1,5 @@
 use crate::input::{Target, hold};
-use eldenring::cs::{ChrIns, UserInputKey, WorldChrMan};
+use eldenring::cs::{CSCamExt, CSCamera, ChrIns, UserInputKey, WorldChrMan};
 use eldenring::rotation::Quaternion;
 use fromsoftware_shared::FromStatic;
 use std::ptr::NonNull;
@@ -46,6 +46,44 @@ pub fn lock(hp: Option<u32>) {
     };
 }
 
+/// A walk to a point, steering every frame.
+struct Walk {
+    to: (f32, f32),
+    radius: f32,
+    left: u32,
+    result: String,
+}
+
+static WALK: Mutex<Walk> = Mutex::new(Walk {
+    to: (0.0, 0.0),
+    radius: 0.0,
+    left: 0,
+    result: String::new(),
+});
+
+pub fn walk(x: f32, z: f32, radius: f32, frames: u32) {
+    *WALK.lock().unwrap() = Walk {
+        to: (x, z),
+        radius,
+        left: frames,
+        result: "walking".into(),
+    };
+}
+
+pub fn stop() {
+    let mut w = WALK.lock().unwrap();
+    if w.left > 0 {
+        w.left = 0;
+        w.result = "stopped".into();
+    }
+    let mut l = LOCK.lock().unwrap();
+    if l.tries > 0 || l.phase != Phase::Idle {
+        l.tries = 0;
+        l.phase = Phase::Idle;
+        l.result = "stopped".into();
+    }
+}
+
 /// Turns the player to look at `t` along the ground.
 pub fn face(w: &mut WorldChrMan, t: NonNull<ChrIns>) -> Result<f32, &'static str> {
     let p = w.main_player.as_mut().ok_or("no player")?;
@@ -61,9 +99,37 @@ pub fn face(w: &mut WorldChrMan, t: NonNull<ChrIns>) -> Result<f32, &'static str
     Ok(yaw.to_degrees())
 }
 
+/// Holds the movement stick for `frames` at `angle` degrees clockwise from
+/// where the camera looks, pushed all the way: movement follows the camera,
+/// not the character.
+pub fn push(angle: f32, frames: u32) {
+    let (s, c) = angle.to_radians().sin_cos();
+    for (key, v) in [
+        (UserInputKey::MoveForwards, c),
+        (UserInputKey::MoveBackwards, -c),
+        (UserInputKey::MoveRight, s),
+        (UserInputKey::MoveLeft, -s),
+    ] {
+        if v > 0.01 {
+            hold(Target::Stick(key, v), frames);
+        }
+    }
+}
+
+/// The ground direction from the camera's forward to world direction (dx, dz),
+/// in degrees clockwise.
+fn camera_angle(dx: f32, dz: f32) -> Option<f32> {
+    let cam = unsafe { CSCamera::instance() }.ok()?;
+    let f = cam.pers_cam_1.forward();
+    let r = cam.pers_cam_1.right();
+    let (fwd, right) = (dx * f.0 + dz * f.2, dx * r.0 + dz * r.2);
+    Some(right.atan2(fwd).to_degrees())
+}
+
 /// Runs once a frame on the main thread, before input is applied.
 pub fn step() {
     lock_step();
+    walk_step();
 }
 
 fn lock_step() {
@@ -126,10 +192,44 @@ fn lock_step() {
     }
 }
 
+fn walk_step() {
+    let mut walk = WALK.lock().unwrap();
+    if walk.left == 0 {
+        return;
+    }
+    walk.left -= 1;
+    let Some(p) = (unsafe { WorldChrMan::instance() })
+        .ok()
+        .and_then(|w| w.main_player.as_ref())
+    else {
+        return;
+    };
+    let me = &p.chr_ins.modules.physics.position;
+    let (dx, dz) = (walk.to.0 - me.0, walk.to.1 - me.2);
+    let dist = (dx * dx + dz * dz).sqrt();
+    if dist < walk.radius {
+        walk.left = 0;
+        walk.result = format!("done dist={dist:.1}");
+        return;
+    }
+    if walk.left == 0 {
+        walk.result = format!("timeout dist={dist:.1}");
+        return;
+    }
+    if let Some(a) = camera_angle(dx, dz) {
+        push(a, 1);
+    }
+    walk.result = format!("walking dist={dist:.1}");
+}
+
 pub fn status(s: &mut String) {
     use std::fmt::Write as _;
     let l = &LOCK.lock().unwrap().result;
     if !l.is_empty() {
         let _ = writeln!(s, "lockon\t{l}");
+    }
+    let w = &WALK.lock().unwrap().result;
+    if !w.is_empty() {
+        let _ = writeln!(s, "walk\t{w}");
     }
 }

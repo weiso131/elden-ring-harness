@@ -227,6 +227,39 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 Err(e) => format!("error {e}\n"),
             }
         }
+        ["move", angle, rest @ ..] if rest.len() <= 1 => {
+            let Ok(angle) = angle.parse::<f32>() else {
+                return format!("error not an angle: {angle}\n");
+            };
+            let frames = match rest {
+                [] => 1,
+                [n] => match n.parse::<u32>() {
+                    Ok(n) if n > 0 => n,
+                    _ => return format!("error not a frame count: {n}\n"),
+                },
+                _ => unreachable!(),
+            };
+            crate::drive::push(angle, frames);
+            format!("ok move {angle} frames={frames}\n")
+        }
+        ["walkto", rest @ ..] if (2..=4).contains(&rest.len()) => {
+            let Ok(v) = rest
+                .iter()
+                .map(|a| a.parse::<f32>())
+                .collect::<Result<Vec<_>, _>>()
+            else {
+                return "error usage: walkto X Z [RADIUS [SECONDS]]\n".into();
+            };
+            let radius = v.get(2).copied().unwrap_or(1.0);
+            let secs = v.get(3).copied().unwrap_or(30.0);
+            crate::drive::walk(v[0], v[1], radius, (secs * 60.0) as u32);
+            format!("ok walkto {} {} radius={radius}; see walk in status\n", v[0], v[1])
+        }
+        ["stop"] => {
+            crate::drive::stop();
+            crate::input::release();
+            "ok stopped walks, lock-ons and held keys\n".into()
+        }
         ["probe", name] => match crate::input::key(name) {
             Some(key) => {
                 crate::input::probe(key, 120);
@@ -278,7 +311,7 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
         ["press", name, rest @ ..] => {
             let target = match (crate::input::key(name), crate::input::stick(name)) {
                 (Some(k), _) => crate::input::Target::Key(k),
-                (_, Some(k)) => crate::input::Target::Stick(k),
+                (_, Some(k)) => crate::input::Target::Stick(k, 1.0),
                 _ => return format!("error unknown key: {name}\n"),
             };
             let frames = match rest {

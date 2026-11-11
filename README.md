@@ -112,6 +112,11 @@ cli/target/release/erh scan          # for 120 frames, list raw input indices se
 cli/target/release/erh rawpress 252 3 # hold a raw input index, e.g. a menu key found by scan
 cli/target/release/erh keypress 0x12 3 # hold a key by DirectInput code (0x12 is E) in the keyboard device
 cli/target/release/erh mousepress 0 3 # hold a mouse button (0 is left) in the mouse device
+cli/target/release/erh move 90 30    # push the movement stick 90 degrees right of where the camera
+                                     # looks, for 30 frames
+cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # steer to a world position until within
+                                     # RADIUS (default 1) meters; see walk in status
+cli/target/release/erh stop          # drop walks, lock-ons and held keys
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
@@ -133,6 +138,9 @@ as ssh from another device.
 `lockon` faces the player to the target and presses once a try: with the
 target out of view a press only swings the camera behind the player, who faces
 it by then, so the next press locks.
+
+Movement follows the camera, as with a real stick, so `move 0` while locked on
+goes towards the enemy.
 
 `targethp 0` kills a two-phase boss outright instead of starting its second phase,
 and `targethp 1` starts nothing (seen with Malenia). The phase change most likely
@@ -158,6 +166,14 @@ It clears the boss's flags, warps to Roundtable Hold and back so the boss's map 
 reloaded, waits for the boss to be loaded, and sets its HP, locking on first for
 bosses that change phase only while locked on. It ends turned to the boss and
 locked on, unless `--no-lock` is given.
+
+`scripts/path.sh` records a route walked by hand and walks it again, for
+bosses whose fight starts at a fog gate that warping skips:
+
+```sh
+scripts/path.sh record godrick.path  # walk from the grace to the fog, then Ctrl-C
+scripts/path.sh play godrick.path    # walk it with walkto, point by point
+```
 
 `--title` presses E on a uinput keyboard (`scripts/title.py`), since the title menus
 do not take the mod's presses, five seconds apart, until `status` shows the player in
