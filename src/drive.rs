@@ -182,8 +182,9 @@ fn lock_step() {
             l.result = "facing".into();
         }
         Phase::Facing => {
-            // One press a try: a second one while locked would drop the lock.
-            hold(Target::Key(UserInputKey::ResetCameraTapped), 2);
+            // One press a try, one frame long: a second frame reads as a
+            // second press and drops the lock just taken.
+            hold(Target::Key(UserInputKey::ResetCameraTapped), 1);
             l.tries -= 1;
             l.phase = Phase::Pressed;
             l.wait = LOCK_WAIT;
