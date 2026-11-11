@@ -80,15 +80,19 @@ block=$(col 2) grace=$(col 3) flags=$(col 4) fight=$(col 5) fog=$(col 6) lock=$(
 [ "$hp" = - ] && hp=none
 
 locked=no
-wait_lock() {
+try_lock() { # succeeds once the lock is taken
 	for _ in $(seq 60); do
 		case $(field lockon) in
-		done*) return ;;
-		"no lock" | "no target") echo "not locked on; is the game window focused?" >&2; exit 1 ;;
+		done*) return 0 ;;
+		"no lock" | "no target") return 1 ;;
 		esac
 		sleep 0.1
 	done
-	echo "timed out locking on" >&2
+	return 1
+}
+wait_lock() {
+	try_lock && return
+	echo "not locked on; is the game window focused?" >&2
 	exit 1
 }
 
@@ -160,8 +164,14 @@ if [ "$hp" != none ]; then
 fi
 # The mod turns the player to the boss and presses lockon, retrying since a
 # press with the boss out of view only swings the camera behind the player.
+# A boss can start out of reach, as Bayle does in the air, so a failed lock
+# is tried again a few seconds later.
 if [ "$lockon" = yes ] && [ "$locked" = no ]; then
-	"$erh" lockon
-	wait_lock
+	for try in 1 2 3; do
+		"$erh" lockon
+		try_lock && break
+		[ $try = 3 ] && { echo "not locked on; is the game window focused?" >&2; exit 1; }
+		sleep 5
+	done
 fi
 "$erh" status
