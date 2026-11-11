@@ -118,6 +118,8 @@ cli/target/release/erh walkto X Z [RADIUS [SECONDS]] # steer to a position in th
                                      # `pos`) until within RADIUS (default 1) meters; see walk
 cli/target/release/erh stop          # drop walks, lock-ons and held keys
 cli/target/release/erh give 2180000  # put an item in the inventory (here Carian Knight's Sword)
+cli/target/release/erh equip 2180000 # put an inventory weapon in a weapon slot (default 1, right hand 1)
+cli/target/release/erh asm           # list the six weapon slots
 ```
 
 `erh` uses `$ERH_DIR`, `-d RUN_DIR`, or else the newest run in `./out`. A command
@@ -150,8 +152,8 @@ its answer shows the addresses found, which for 2.7.2 should be
 its top bits (weapons 0, armor 0x10000000, talismans 0x20000000, goods
 0x40000000, ashes of war 0x80000000), and a weapon's upgrade level is added to
 it (2180010 is the sword at +10). Ids are listed in Erd-Tools'
-`EquipParamWeapon.txt` and the like. The item still has to be equipped from
-the menu.
+`EquipParamWeapon.txt` and the like. `equip` writes the slot directly,
+as the equipment menu is assumed to; not tried in the game yet.
 
 `targethp 0` kills a two-phase boss outright instead of starting its second phase,
 and `targethp 1` starts nothing (seen with Malenia). The phase change most likely

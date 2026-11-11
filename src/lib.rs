@@ -1,6 +1,7 @@
 mod clock;
 mod control;
 mod drive;
+mod equip;
 mod input;
 mod item;
 mod tasks;

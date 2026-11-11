@@ -280,6 +280,30 @@ fn run(cmd: &str, frame: u64, dir: &Path) -> String {
                 Err(e) => format!("error {e}\n"),
             }
         }
+        ["asm"] => match crate::equip::dump() {
+            Ok(out) => out,
+            Err(e) => format!("error {e}\n"),
+        },
+        ["equip", id, rest @ ..] if rest.len() <= 1 => {
+            let id = id
+                .strip_prefix("0x")
+                .map_or_else(|| id.parse(), |h| u32::from_str_radix(h, 16));
+            let Ok(id) = id else {
+                return "error not an item id (decimal or 0x..)\n".into();
+            };
+            let slot = match rest {
+                [] => 1,
+                [n] => match n.parse() {
+                    Ok(n) => n,
+                    _ => return format!("error not a slot: {n}\n"),
+                },
+                _ => unreachable!(),
+            };
+            match crate::equip::equip(id, slot) {
+                Ok(info) => format!("ok equip {info}\n"),
+                Err(e) => format!("error {e}\n"),
+            }
+        }
         ["probe", name] => match crate::input::key(name) {
             Some(key) => {
                 crate::input::probe(key, 120);
